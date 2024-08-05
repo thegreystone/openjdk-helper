@@ -19,14 +19,6 @@ https://api.hirt.se/openjdk/swagger-ui/
 Or in openapi format here:  
 https://api.hirt.se/openjdk/openapi/
 
-Here's an example on how to get a simple slogan text for OpenJDK:  
-https://api.hirt.se/openjdk/text?item=OpenJDK
-
-Here is an example of how I use it on my homepage https://hirt.se:
-```shell script
-https://api.hirt.se/openjdk/describeUser?userid=hirt
-```
-
 ## Running the application in dev mode
 
 You can run the application in dev mode that enables live coding using:
@@ -34,8 +26,6 @@ You can run the application in dev mode that enables live coding using:
 ```shell script
 ./mvnw compile quarkus:dev
 ```
-
-Browse to localhost:8080/test to try it out.
 
 > **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at <http://localhost:8080/q/dev/>.
 
@@ -74,7 +64,7 @@ Or, if you don't have GraalVM installed, you can run the native executable build
 ./mvnw package -Dnative -Dquarkus.native.container-build=true
 ```
 
-You can then execute your native executable with: `./target/slogan-generator-(version)-SNAPSHOT-runner`
+You can then execute your native executable with: `./target/openjdk-helper-(version)-SNAPSHOT-runner`
 
 ## Creating the docker image
 You can create a docker image using:
@@ -90,7 +80,7 @@ mvnw clean package -Pnative -Dquarkus.native.container-build=true -Dquarkus.cont
 
 Run the image using:
 ```shell script
-docker run -i --rm -p 8080:8080 greystone/slogan-generator:latest
+docker run -i --rm -p 8080:8080 greystone/openjdk-helper:latest
 ```
 
 ## Publishing images (for maintainers)
