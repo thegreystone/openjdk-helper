@@ -1,0 +1,36 @@
+####
+# This Dockerfile is used in order to build a container that runs the Quarkus application in native (no JVM) mode.
+#
+# Before building the container image run:
+#
+# ./mvnw package -Dnative
+#
+# Then, build the image with:
+#
+# docker build -f src/main/docker/Dockerfile.native -t quarkus/openjdk-helper .
+#
+# Then run the container using:
+#
+# docker run -i --rm -p 8080:8080 quarkus/openjdk-helper
+#
+###
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.9
+WORKDIR /work/
+RUN chown 1001 /work \
+    && chmod "g+rwX" /work \
+    && chown 1001:root /work
+
+COPY --chown=1001:root target/*.properties target/*.so /work/
+COPY --chown=1001:root target/*-runner /work/application
+
+RUN microdnf install freetype fontconfig \
+    && microdnf clean all
+
+# Permissions fix for Windows
+RUN chmod "ugo+x" /work/application \
+    && chown -R 1001:root /work
+
+EXPOSE 8080
+USER 1001
+
+ENTRYPOINT ["./application", "-Dquarkus.http.host=0.0.0.0"]

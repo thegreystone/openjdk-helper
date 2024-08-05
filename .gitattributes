@@ -1,0 +1,17 @@
+# Ensure shell scripts have LF line endings
+*.sh text eol=lf
+
+# Endure yaml files have LF line endings
+*.yaml text eol=lf
+*.yml text eol=lf
+
+# Ensure JPG images are treated as binary
+*.jpg binary
+
+# Ensure batch scripts have CRLF line endings
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Ensure Maven wrapper scripts retain their original line endings
+mvnw text eol=lf
+mvnw.cmd
