@@ -32,7 +32,7 @@ Copyright (C) Marcus Hirt, 2024
     <modelVersion>4.0.0</modelVersion>
     <groupId>se.hirt</groupId>
     <artifactId>openjdk-helper</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.2-SNAPSHOT</version>
 
     <properties>
         <compiler-plugin.version>3.13.0</compiler-plugin.version>
