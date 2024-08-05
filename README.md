@@ -1,9 +1,9 @@
-[![CI](https://github.com/thegreystone/slogan-generator/actions/workflows/ci.yml/badge.svg)](https://github.com/thegreystone/openjdk-helper/actions/workflows/ci.yml)
+[![CI](https://github.com/thegreystone/openjdk-helper/actions/workflows/ci.yml/badge.svg)](https://github.com/thegreystone/openjdk-helper/actions/workflows/ci.yml)
 [![Java Version](https://img.shields.io/badge/Java-17%2B-blue)](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html)
 [![Quarkus](https://img.shields.io/badge/Quarkus-3.12.3-blue.svg?style=flat&logo=quarkus)](https://quarkus.io/)
-[![Docker Pulls](https://img.shields.io/docker/pulls/greystone/slogan-generator.svg)](https://hub.docker.com/r/greystone/openjdk-helper)
+[![Docker Pulls](https://img.shields.io/docker/pulls/greystone/openjdk-helper.svg)](https://hub.docker.com/r/greystone/openjdk-helper)
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
-[![Version](https://img.shields.io/docker/v/greystone/slogan-generator?sort=semver)](https://hub.docker.com/r/greystone/openjdk-helper)
+[![Version](https://img.shields.io/docker/v/greystone/openjdk-helper?sort=semver)](https://hub.docker.com/r/greystone/openjdk-helper)
 
 # openjdk-helper
 
