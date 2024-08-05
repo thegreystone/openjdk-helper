@@ -14,7 +14,7 @@ mvn versions:commit
 ./mvnw package
 
 # Only building with the release tag - latest is built on each commit to GitHub
-docker buildx build -f src/main/docker/Dockerfile.jvm --platform linux/amd64,linux/arm64 -t greystone/slogan-generator:$VERSION --push .
+docker buildx build -f src/main/docker/Dockerfile.jvm --platform linux/amd64,linux/arm64 -t greystone/openjdk-helper:$VERSION --push .
 
 # Revert version in pom.xml to next development version
 NEXT_DEV_VERSION="${VERSION%.*}.$((${VERSION##*.} + 1))-SNAPSHOT"
