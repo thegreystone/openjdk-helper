@@ -11,7 +11,7 @@ This is a simple service meant to help with OpenJDK activities. It is meant to b
 
 ## Using the openjdk-helper
 
-The slogan generator is up and running at https://api.hirt.se/openjdk. It is available and ready to use. 
+The openjdk helper is up and running at https://api.hirt.se/openjdk. It is available and ready to use. 
 
 The api is described here:  
 https://api.hirt.se/openjdk/swagger-ui/
