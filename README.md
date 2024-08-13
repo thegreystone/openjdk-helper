@@ -7,7 +7,7 @@
 
 # openjdk-helper
 
-This is a simple service meant to help with OpenJDK activities. It is meant to be used by my It is meant to be used by my [OpenJDK Project Assistant](https://chatgpt.com/g/g-cdK5pudqC-openjdk-project-assistant) Custom GPT. 
+This is a simple service meant to help with OpenJDK project activities. It is being used by my [OpenJDK Project Assistant](https://chatgpt.com/g/g-cdK5pudqC-openjdk-project-assistant) Custom GPT. 
 
 ## Using the openjdk-helper
 
