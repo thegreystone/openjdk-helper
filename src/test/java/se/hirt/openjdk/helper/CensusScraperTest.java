@@ -34,12 +34,12 @@ package se.hirt.openjdk.helper;
 import io.quarkus.test.junit.QuarkusTest;
 import org.apache.groovy.json.internal.IO;
 import org.junit.jupiter.api.Test;
+import se.hirt.openjdk.helper.census.*;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 

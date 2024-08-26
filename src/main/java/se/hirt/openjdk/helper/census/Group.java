@@ -29,40 +29,10 @@
  *
  * Copyright (C) Marcus Hirt, 2024
  */
-package se.hirt.openjdk.helper;
+package se.hirt.openjdk.helper.census;
 
-import java.util.HashMap;
-import java.util.Map;
-
-public class Person {
-	private final String userid;
-	private final String fullName;
-	private final Map<String, Affiliation> affiliations = new HashMap<>();
-
-	public Person(String userid, String fullName) {
-		this.userid = userid;
-		this.fullName = fullName;
-	}
-
-	public void addAffiliation(String affiliationId, Affiliation affiliation) {
-		affiliations.put(affiliationId, affiliation);
-	}
-
-	// Getters
-	public String getUserid() { return userid; }
-	public String getFullName() { return fullName; }
-	public Map<String, Affiliation> getAffiliations() { return affiliations; }
-
-	@Override
-	public String toString() {
-		StringBuilder builder = new StringBuilder();
-		builder.append("Person{\n\tuserid='").append(userid).append("'\n\tfullName='").append(fullName).append("'\n\taffiliations:");
-
-		for (Affiliation affiliation : affiliations.values()) {
-			String role = affiliation.getMembers().get(userid);
-			builder.append("\n\t\t").append(affiliation.getClass().getSimpleName()).append(": ").append(affiliation.getFullName()).append(" - ").append(role);
-		}
-		builder.append("\n}\n");
-		return builder.toString();
+public class Group extends Affiliation {
+	public Group(String groupId) {
+		super(groupId);
 	}
 }

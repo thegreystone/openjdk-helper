@@ -3,6 +3,7 @@ package se.hirt.openjdk.helper;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
+import se.hirt.openjdk.helper.census.CensusRetriever;
 
 import java.io.IOException;
 

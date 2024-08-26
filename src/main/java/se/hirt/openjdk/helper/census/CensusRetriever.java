@@ -1,4 +1,4 @@
-package se.hirt.openjdk.helper;
+package se.hirt.openjdk.helper.census;
 
 import java.net.URI;
 import java.net.http.HttpClient;

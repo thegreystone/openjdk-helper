@@ -83,6 +83,10 @@ Copyright (C) Marcus Hirt, 2024
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-rest</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-rest-client</artifactId>
+        </dependency>
         <!-- JSON-B for JSON processing -->
         <dependency>
             <groupId>io.quarkus</groupId>

@@ -29,10 +29,59 @@
  *
  * Copyright (C) Marcus Hirt, 2024
  */
-package se.hirt.openjdk.helper;
+package se.hirt.openjdk.helper.census;
 
-public class Group extends Affiliation {
-	public Group(String groupId) {
-		super(groupId);
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+
+public abstract class Affiliation {
+	private final String id;
+
+	private final Map<String, String> members = new HashMap<>();
+
+	private String fullName;
+
+	public Affiliation(String id) {
+		this.id = id;
+	}
+
+	public String getFullName() {
+		return fullName;
+	}
+
+	public void setFullName(String fullName) {
+		this.fullName = fullName;
+	}
+
+	public void addMember(String member, String role) {
+		members.put(member, role);
+	}
+
+	public Map<String, String> getMembers() {
+		return members;
+	}
+
+	public String getId() {
+		return id;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o)
+			return true;
+		if (o == null || getClass() != o.getClass())
+			return false;
+		Affiliation affiliation = (Affiliation) o;
+		return Objects.equals(id, affiliation.id);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hashCode(id);
+	}
+
+	public String toString() {
+		return getClass().getSimpleName() + " " + members.size() + " members";
 	}
 }

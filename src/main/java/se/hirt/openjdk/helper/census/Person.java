@@ -29,59 +29,40 @@
  *
  * Copyright (C) Marcus Hirt, 2024
  */
-package se.hirt.openjdk.helper;
+package se.hirt.openjdk.helper.census;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
-public abstract class Affiliation {
-	private final String id;
+public class Person {
+	private final String userid;
+	private final String fullName;
+	private final Map<String, Affiliation> affiliations = new HashMap<>();
 
-	private final Map<String, String> members = new HashMap<>();
-
-	private String fullName;
-
-	public Affiliation(String id) {
-		this.id = id;
-	}
-
-	public String getFullName() {
-		return fullName;
-	}
-
-	public void setFullName(String fullName) {
+	public Person(String userid, String fullName) {
+		this.userid = userid;
 		this.fullName = fullName;
 	}
 
-	public void addMember(String member, String role) {
-		members.put(member, role);
+	public void addAffiliation(String affiliationId, Affiliation affiliation) {
+		affiliations.put(affiliationId, affiliation);
 	}
 
-	public Map<String, String> getMembers() {
-		return members;
-	}
-
-	public String getId() {
-		return id;
-	}
+	// Getters
+	public String getUserid() { return userid; }
+	public String getFullName() { return fullName; }
+	public Map<String, Affiliation> getAffiliations() { return affiliations; }
 
 	@Override
-	public boolean equals(Object o) {
-		if (this == o)
-			return true;
-		if (o == null || getClass() != o.getClass())
-			return false;
-		Affiliation affiliation = (Affiliation) o;
-		return Objects.equals(id, affiliation.id);
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hashCode(id);
-	}
-
 	public String toString() {
-		return getClass().getSimpleName() + " " + members.size() + " members";
+		StringBuilder builder = new StringBuilder();
+		builder.append("Person{\n\tuserid='").append(userid).append("'\n\tfullName='").append(fullName).append("'\n\taffiliations:");
+
+		for (Affiliation affiliation : affiliations.values()) {
+			String role = affiliation.getMembers().get(userid);
+			builder.append("\n\t\t").append(affiliation.getClass().getSimpleName()).append(": ").append(affiliation.getFullName()).append(" - ").append(role);
+		}
+		builder.append("\n}\n");
+		return builder.toString();
 	}
 }

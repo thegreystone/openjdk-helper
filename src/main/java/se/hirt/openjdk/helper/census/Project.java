@@ -29,7 +29,7 @@
  *
  * Copyright (C) Marcus Hirt, 2024
  */
-package se.hirt.openjdk.helper;
+package se.hirt.openjdk.helper.census;
 
 public class Project extends Affiliation {
 	public Project(String projectId) {
