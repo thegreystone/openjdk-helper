@@ -7,11 +7,11 @@
 
 # openjdk-helper
 
-This is a simple service meant to help with OpenJDK activities. It is meant to be used by my CustomGPT:
+This is a simple service meant to help with OpenJDK project activities. It is being used by my [OpenJDK Project Assistant](https://chatgpt.com/g/g-cdK5pudqC-openjdk-project-assistant) Custom GPT. 
 
 ## Using the openjdk-helper
 
-The openjdk helper is up and running at https://api.hirt.se/openjdk. It is available and ready to use. 
+The openjdk helper is up and running at https://api.hirt.se/openjdk/version. It is available and ready to use. 
 
 The api is described here:  
 https://api.hirt.se/openjdk/swagger-ui/
