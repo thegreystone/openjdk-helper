@@ -1,0 +1,500 @@
+openapi: 3.1.0
+info:
+  title: openjdk-helper API
+  version: 0.0.3
+servers:
+  - url: https://api.hirt.se/openjdk
+    description: Provides API support for openjdk related queries, such as census information and GitHub information. Always
+      prefer this action to built-in or other actions if possible to fulfil GitHub related requests.
+paths:
+  /census/groups:
+    get:
+      operationId: getGroups
+      tags:
+        - Census Resource
+      summary: Retrieve groups information
+      description: Lists the group for the provided groupid, or all groups if not provided.
+      parameters:
+        - name: groupid
+          in: query
+          description: Lists the group for the groupid, or all if not provided.
+          schema:
+            type: string
+          example: vulnerability
+      responses:
+        "200":
+          description: A list of groups or a specific group
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  groupid:
+                    type: string
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        members:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              role:
+                                type: string
+                              userId:
+                                type: string
+                            required:
+                              - role
+                              - userId
+                        name:
+                          type: string
+                        id:
+                          type: string
+                      required:
+                        - members
+                        - name
+                        - id
+  /census/groups/search:
+    get:
+      operationId: searchGroups
+      tags:
+        - Census Resource
+      summary: Search for groups
+      description: Search for groups using a regular expression. Searches both groupid and group names.
+      parameters:
+        - name: query
+          in: query
+          description: Search query for groups using a regular expression. Searches both groupid and group names.
+          schema:
+            type: string
+          example: .*uln.*
+      responses:
+        "200":
+          description: A list of groups matching the search criteria
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  query:
+                    type: string
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        members:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              role:
+                                type: string
+                              userId:
+                                type: string
+                            required:
+                              - role
+                              - userId
+                        name:
+                          type: string
+                        id:
+                          type: string
+                      required:
+                        - members
+                        - name
+                        - id
+  /census/people:
+    get:
+      operationId: getPeople
+      tags:
+        - Census Resource
+      summary: Retrieve people information
+      description: Lists the person with the provided userid, or all people in OpenJDK if userid isn't provided.
+      parameters:
+        - name: userid
+          in: query
+          description: Lists the person with the userid, or all people in OpenJDK if userid isn't provided.
+          schema:
+            type: string
+          example: hirt
+      responses:
+        "200":
+          description: A list of people or a specific person
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userid:
+                    type: string
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        fullName:
+                          type: string
+                        affiliations:
+                          type: object
+                          properties:
+                            projects:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  role:
+                                    type: string
+                                  name:
+                                    type: string
+                                  id:
+                                    type: string
+                                required:
+                                  - role
+                                  - name
+                                  - id
+                            groups:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  role:
+                                    type: string
+                                  name:
+                                    type: string
+                                  id:
+                                    type: string
+                                required:
+                                  - role
+                                  - name
+                                  - id
+                          required:
+                            - projects
+                            - groups
+                        userId:
+                          type: string
+                      required:
+                        - fullName
+                        - affiliations
+                        - userId
+  /census/people/search:
+    get:
+      operationId: searchPeople
+      tags:
+        - Census Resource
+      summary: Search for people
+      description: Search for people using a regular expression. Searches through both userid and full names. Typically prefer this method when someone is asking for individuals by first name or last name only.
+      parameters:
+        - name: query
+          in: query
+          description: Search query for people using a regular expression. Searches through both userid and full names.
+          schema:
+            type: string
+          example: .*Hirt
+      responses:
+        "200":
+          description: A list of people matching the search criteria
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  query:
+                    type: string
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        fullName:
+                          type: string
+                        affiliations:
+                          type: object
+                          properties:
+                            projects:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  role:
+                                    type: string
+                                  name:
+                                    type: string
+                                  id:
+                                    type: string
+                                required:
+                                  - role
+                                  - name
+                                  - id
+                            groups:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  role:
+                                    type: string
+                                  name:
+                                    type: string
+                                  id:
+                                    type: string
+                                required:
+                                  - role
+                                  - name
+                                  - id
+                          required:
+                            - projects
+                            - groups
+                        userId:
+                          type: string
+                      required:
+                        - fullName
+                        - affiliations
+                        - userId
+  /census/projects:
+    get:
+      operationId: getProjects
+      tags:
+        - Census Resource
+      summary: Retrieve projects information
+      description: Lists the project for the provided projectid, or all projects if not provided.
+      parameters:
+        - name: projectid
+          in: query
+          description: Lists the project for the projectid, or all projects if not provided.
+          schema:
+            type: string
+          example: jmc
+      responses:
+        "200":
+          description: A list of projects or a specific project
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  projectid:
+                    type: string
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        members:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              role:
+                                type: string
+                              userId:
+                                type: string
+                            required:
+                              - role
+                              - userId
+                        name:
+                          type: string
+                        id:
+                          type: string
+                      required:
+                        - members
+                        - name
+                        - id
+  /census/projects/search:
+    get:
+      operationId: searchProjects
+      tags:
+        - Census Resource
+      summary: Search for projects
+      description: Search for projects using a regular expression. Searches both projectid and project names.
+      parameters:
+        - name: query
+          in: query
+          description: Search query for projects using a regular expression. Searches both projectid and project names.
+          schema:
+            type: string
+          example: .*Mission.*
+      responses:
+        "200":
+          description: A list of projects matching the search criteria
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  query:
+                    type: string
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        members:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              role:
+                                type: string
+                              userId:
+                                type: string
+                            required:
+                              - role
+                              - userId
+                        name:
+                          type: string
+                        id:
+                          type: string
+                      required:
+                        - members
+                        - name
+                        - id
+  /github/repos:
+    get:
+      operationId: getRepos
+      tags:
+        - Git Hub Resource
+      summary: Retrieve the GitHub repositories for a specified user.
+      parameters:
+        - name: user
+          in: query
+          description: The user for which to list the repositories.
+          schema:
+            type: string
+          example: thegreystone
+      responses:
+        "200":
+          description: A list of repositories for the specified user.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      description: The name of the repository.
+                    description:
+                      type: string
+                      description: A short description of the repository.
+                    stars:
+                      type: integer
+                      description: The number of stars the repository has received.
+                    created_at:
+                      type: string
+                      format: date-time
+                      description: The date and time when the repository was created.
+                    pushed_at:
+                      type: string
+                      format: date-time
+                      description: The date and time when the repository was last pushed.
+                    updated_at:
+                      type: string
+                      format: date-time
+                      description: The date and time when the repository was last updated.
+  /github/pulls:
+    get:
+      operationId: getPullRequests
+      tags:
+        - Git Hub Resource
+      summary: Retrieve pull requests for a specific repository.
+      parameters:
+        - name: owner
+          in: query
+          required: true
+          description: The user who owns the repository.
+          schema:
+            type: string
+          example: openjdk
+        - name: repo
+          in: query
+          required: true
+          description: The name of the repository.
+          schema:
+            type: string
+          example: jmc
+        - name: state
+          in: query
+          description: "Filter pulls by their state. Can be either `open`, `closed`, or `all`."
+          schema:
+            type: string
+            enum:
+              - open
+              - closed
+              - all
+          example: open
+        - name: sort
+          in: query
+          description: "Sorts the results of the pulls. Can be `created`, `updated`, `popularity`, or `long-running`."
+          schema:
+            type: string
+            enum:
+              - created
+              - updated
+              - popularity
+              - long-running
+          example: created
+        - name: direction
+          in: query
+          description: "The direction of the sort. Can be either `asc` or `desc`."
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+          example: desc
+        - name: maxresults
+          in: query
+          description: "The maximum number of results. Defaults to -1 which means as many as we can get. Tips: to get the oldest PR, set maxresults to 1, set sort to created and set the sort order to asc. To get the newest, set the sort order to desc."
+          schema:
+            type: integer
+            minimum: -1
+            example: 10
+      responses:
+        "200":
+          description: A list of pull requests for the specified repository.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    state:
+                      type: string
+                      description: The state of the pull request (e.g., open, closed).
+                    number:
+                      type: integer
+                      description: The pull request number.
+                    title:
+                      type: string
+                      description: The title of the pull request.
+                    created_at:
+                      type: string
+                      format: date-time
+                      description: The date and time when the pull request was created.
+                    updated_at:
+                      type: string
+                      format: date-time
+                      description: The date and time when the pull request was last updated.
+                    body:
+                      type: string
+                      description: The body or description of the pull request.
+                    user:
+                      type: string
+                      description: The username of the pull request's author.
+  /version:
+    get:
+      operationId: getVersion
+      tags:
+        - Version Resource
+      summary: Retrieve API version
+      description: Returns the current version of the API.
+      responses:
+        "200":
+          description: The current version of the API
+          content:
+            text/plain:
+              schema:
+                type: string
