@@ -41,7 +41,10 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -92,7 +95,8 @@ public class OpenjdkCensusScraper {
 	/**
 	 * For testing purposes _only_.
 	 *
-	 * @param html the HTML to use when testing.
+	 * @param html
+	 * 		the HTML to use when testing.
 	 */
 	public OpenjdkCensusScraper(String html) {
 		censusRetriever = new CensusRetriever();
@@ -137,7 +141,7 @@ public class OpenjdkCensusScraper {
 
 	public Set<Person> findPeople(String regexp) {
 		Pattern pattern = Pattern.compile(regexp);
-		Predicate<Person> predicate = person ->  pattern.matcher(person.getFullName()).find() || pattern.matcher(person.getUserid()).find();
+		Predicate<Person> predicate = person -> pattern.matcher(person.getFullName()).find() || pattern.matcher(person.getUserid()).find();
 		synchronized (this) {
 			return people.values().stream().filter(predicate).collect(Collectors.toSet());
 		}
@@ -145,7 +149,7 @@ public class OpenjdkCensusScraper {
 
 	public Set<Project> findProjects(String regexp) {
 		Pattern pattern = Pattern.compile(regexp);
-		Predicate<Project> predicate = project ->  pattern.matcher(project.getFullName()).find() || pattern.matcher(project.getId()).find();
+		Predicate<Project> predicate = project -> pattern.matcher(project.getFullName()).find() || pattern.matcher(project.getId()).find();
 		synchronized (this) {
 			return projects.values().stream().filter(predicate).collect(Collectors.toSet());
 		}
@@ -153,12 +157,11 @@ public class OpenjdkCensusScraper {
 
 	public Set<Group> findGroups(String regexp) {
 		Pattern pattern = Pattern.compile(regexp);
-		Predicate<Group> predicate = group ->  pattern.matcher(group.getFullName()).find() || pattern.matcher(group.getId()).find();
+		Predicate<Group> predicate = group -> pattern.matcher(group.getFullName()).find() || pattern.matcher(group.getId()).find();
 		synchronized (this) {
 			return groups.values().stream().filter(predicate).collect(Collectors.toSet());
 		}
 	}
-
 
 	private static Set<String> extractUserIds(Document doc) {
 		Set<String> userIds = new HashSet<>();
@@ -243,7 +246,6 @@ public class OpenjdkCensusScraper {
 								String[] parts = entityRole.split("–");
 								String affiliationName = parts[0].trim();
 								String roleName = parts.length > 1 ? parts[1].trim() : "Member";
-
 
 								Affiliation affiliation = null;
 								if (role.equals("Groups")) {

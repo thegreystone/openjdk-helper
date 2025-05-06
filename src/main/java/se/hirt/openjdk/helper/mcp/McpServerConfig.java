@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2024 Marcus Hirt
- *                    www.hirt.se
+ * Copyright (C) 2025 Marcus Hirt
  *
  * This software is free:
  *
@@ -26,42 +25,39 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Copyright (C) Marcus Hirt, 2024
  */
-package se.hirt.openjdk.helper;
+package se.hirt.openjdk.helper.mcp;
 
-import io.quarkus.test.junit.QuarkusTest;
-import org.junit.jupiter.api.Test;
+import io.quarkus.runtime.StartupEvent;
+import io.quarkus.runtime.annotations.RegisterForReflection;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
+import org.jboss.logging.Logger;
 
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.*;
+/**
+ * MCP Server configuration observer to ensure the MCP server is properly initialized.
+ */
+@ApplicationScoped
+@RegisterForReflection
+public class McpServerConfig {
 
-@QuarkusTest
-public class CensusResourceTest {
+	private static final Logger LOG = Logger.getLogger(McpServerConfig.class);
 
-	@Test
-	public void testSearchPeopleEndpoint() {
-		given().when().get("/census/people/search?query=Hir.*").then().statusCode(200).body("query", is("Hir.*"))
-				.body("results", hasSize(3)).body("results[0].userId", notNullValue()).body("results[0].fullName", notNullValue())
-				.body("results[0].affiliations.groups", isA(java.util.List.class))
-				.body("results[0].affiliations.projects", isA(java.util.List.class));
-	}
+	@Inject
+	OpenJDKHelperTools helperTools;
 
-	@Test
-	public void testSearchPeopleEndpointNoResults() {
-		given().when().get("/census/people/search?query=NonexistentPerson").then().statusCode(200).body("query", is("NonexistentPerson"))
-				.body("results", hasSize(0));
-	}
+	void onStart(@Observes StartupEvent ev) {
+		LOG.info("MCP Server starting up...");
+		LOG.info("MCP Tools registered: " + (helperTools != null ? "Yes" : "No"));
+		LOG.info("OpenJDK Helper Tools class: " + (helperTools != null ? helperTools.getClass().getName() : "Not available"));
 
-	@Test
-	public void testSearchPeopleEndpointMissingQuery() {
-		given().when().get("/census/people/search").then().statusCode(400).body("error", is("Query parameter is required"));
-	}
+		// Transport options
+		LOG.info("MCP SSE endpoint available at: /mcp/sse");
+		LOG.info("MCP stdio " + (Boolean.getBoolean("quarkus.mcp.server.stdio.enabled") ? "enabled" : "disabled"));
 
-	@Test
-	public void testSearchPeopleEndpointEmptyQuery() {
-		given().when().get("/census/people/search?query=").then().statusCode(400).body("error", is("Query parameter is required"));
+		// Connection instructions
+		LOG.info("MCP Inspector SSE connection: npx @modelcontextprotocol/inspector http://localhost:8080/mcp --transport-type=sse");
+		LOG.info("For stdio mode, restart with: java -Dquarkus.mcp.server.stdio.enabled=true -jar target/quarkus-app/quarkus-run.jar");
 	}
 }

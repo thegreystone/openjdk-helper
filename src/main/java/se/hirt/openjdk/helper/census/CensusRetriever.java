@@ -1,14 +1,14 @@
 package se.hirt.openjdk.helper.census;
 
+import io.quarkus.logging.Log;
+import jakarta.enterprise.context.ApplicationScoped;
+
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
-import java.io.IOException;
-
-import io.quarkus.logging.Log;
-import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class CensusRetriever {
@@ -18,18 +18,12 @@ public class CensusRetriever {
 	private final HttpClient httpClient;
 
 	public CensusRetriever() {
-		this.httpClient = HttpClient.newBuilder()
-				.connectTimeout(TIMEOUT)
-				.build();
+		this.httpClient = HttpClient.newBuilder().connectTimeout(TIMEOUT).build();
 	}
 
 	public String retrieveCensusContent() throws IOException, InterruptedException {
 		Log.info("Retrieving OpenJDK census data...");
-		HttpRequest request = HttpRequest.newBuilder()
-				.uri(URI.create(CENSUS_URL))
-				.timeout(TIMEOUT)
-				.GET()
-				.build();
+		HttpRequest request = HttpRequest.newBuilder().uri(URI.create(CENSUS_URL)).timeout(TIMEOUT).GET().build();
 
 		try {
 			HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());

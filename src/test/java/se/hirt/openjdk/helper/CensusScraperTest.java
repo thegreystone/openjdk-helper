@@ -32,7 +32,6 @@
 package se.hirt.openjdk.helper;
 
 import io.quarkus.test.junit.QuarkusTest;
-import org.apache.groovy.json.internal.IO;
 import org.junit.jupiter.api.Test;
 import se.hirt.openjdk.helper.census.*;
 

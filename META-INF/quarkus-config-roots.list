@@ -1,0 +1,2 @@
+io.quarkiverse.mcp.server.runtime.config.McpRuntimeConfig
+io.quarkiverse.mcp.server.runtime.config.McpBuildTimeConfig

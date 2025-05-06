@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2024 Marcus Hirt
- *                    www.hirt.se
+ * Copyright (C) 2025 Marcus Hirt
  *
  * This software is free:
  *
@@ -26,42 +25,59 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Copyright (C) Marcus Hirt, 2024
  */
-package se.hirt.openjdk.helper;
+package se.hirt.openjdk.helper.core;
 
-import io.quarkus.test.junit.QuarkusTest;
-import org.junit.jupiter.api.Test;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.logging.Logger;
+import se.hirt.openjdk.helper.census.CensusService;
+import se.hirt.openjdk.helper.github.GitHubService;
 
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.*;
+/**
+ * Core service that combines all functionality of the OpenJDK Helper. This is the central service that can be used by all interfaces:
+ * - REST/OpenAPI endpoints
+ * - HTTP MCP endpoints
+ * - Stdio MCP implementation
+ */
+@ApplicationScoped
+public class OpenJDKHelperService {
+	private static final Logger LOG = Logger.getLogger(OpenJDKHelperService.class);
 
-@QuarkusTest
-public class CensusResourceTest {
+	@Inject
+	private CensusService censusService;
 
-	@Test
-	public void testSearchPeopleEndpoint() {
-		given().when().get("/census/people/search?query=Hir.*").then().statusCode(200).body("query", is("Hir.*"))
-				.body("results", hasSize(3)).body("results[0].userId", notNullValue()).body("results[0].fullName", notNullValue())
-				.body("results[0].affiliations.groups", isA(java.util.List.class))
-				.body("results[0].affiliations.projects", isA(java.util.List.class));
+	@Inject
+	private GitHubService githubService;
+
+	@ConfigProperty(name = "quarkus.application.version", defaultValue = "unknown")
+	String configVersion;
+
+	/**
+	 * Returns the census service.
+	 *
+	 * @return the census service
+	 */
+	public CensusService getCensusService() {
+		return censusService;
 	}
 
-	@Test
-	public void testSearchPeopleEndpointNoResults() {
-		given().when().get("/census/people/search?query=NonexistentPerson").then().statusCode(200).body("query", is("NonexistentPerson"))
-				.body("results", hasSize(0));
+	/**
+	 * Returns the GitHub service.
+	 *
+	 * @return the GitHub service
+	 */
+	public GitHubService getGitHubService() {
+		return githubService;
 	}
 
-	@Test
-	public void testSearchPeopleEndpointMissingQuery() {
-		given().when().get("/census/people/search").then().statusCode(400).body("error", is("Query parameter is required"));
-	}
-
-	@Test
-	public void testSearchPeopleEndpointEmptyQuery() {
-		given().when().get("/census/people/search?query=").then().statusCode(400).body("error", is("Query parameter is required"));
+	/**
+	 * Returns the version of the service.
+	 *
+	 * @return the version string
+	 */
+	public String getVersion() {
+		return configVersion;
 	}
 }

@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2024 Marcus Hirt
- *                    www.hirt.se
+ * Copyright (C) 2025 Marcus Hirt
  *
  * This software is free:
  *
@@ -26,27 +25,44 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Copyright (C) Marcus Hirt, 2024
  */
-package se.hirt.openjdk.helper;
+package se.hirt.openjdk.helper.mcp;
 
-import jakarta.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.OPTIONS;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
-import se.hirt.openjdk.helper.core.OpenJDKHelperService;
+import jakarta.ws.rs.core.Response;
+import org.jboss.logging.Logger;
 
-@Path("/version")
-public class VersionResource {
+/**
+ * MCP helper endpoints and redirects.
+ */
+@Path("/mcp")
+@ApplicationScoped
+public class MCPTransportResource {
 
-	@Inject
-	OpenJDKHelperService helperService;
+	private static final Logger LOG = Logger.getLogger(MCPTransportResource.class);
 
+	/**
+	 * Root MCP endpoint that provides information and redirects.
+	 */
 	@GET
-	@Produces(MediaType.TEXT_PLAIN)
-	public String getVersion() {
-		return helperService.getVersion();
+	@Produces(MediaType.TEXT_HTML)
+	public Response mcpRoot() {
+		String html = "<!DOCTYPE html><html><head><title>OpenJDK Helper MCP Server</title></head><body>" + "<h1>OpenJDK Helper MCP Server</h1>" + "<p>This is the MCP Server for the OpenJDK Helper application.</p>" + "<h2>Available MCP Endpoints</h2>" + "<ul>" + "<li><a href=\"/mcp/sse\">/mcp/sse</a> - Server-Sent Events (SSE) endpoint</li>" + "</ul>" + "<h2>Connection Instructions</h2>" + "<p>To connect with the MCP Inspector, use:</p>" + "<pre>npx @modelcontextprotocol/inspector http://localhost:8080/mcp --transport-type=sse</pre>" + "</body></html>";
+
+		return Response.ok(html).header("Content-Type", "text/html").build();
+	}
+
+	/**
+	 * Handle requests to /mcp directly (for CORS and OPTIONS).
+	 */
+	@OPTIONS
+	public Response mcpOptions() {
+		return Response.ok().header("Access-Control-Allow-Origin", "*").header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+				.header("Access-Control-Allow-Headers", "Content-Type").build();
 	}
 }
