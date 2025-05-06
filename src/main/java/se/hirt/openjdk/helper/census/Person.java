@@ -49,9 +49,17 @@ public class Person {
 	}
 
 	// Getters
-	public String getUserid() { return userid; }
-	public String getFullName() { return fullName; }
-	public Map<String, Affiliation> getAffiliations() { return affiliations; }
+	public String getUserid() {
+		return userid;
+	}
+
+	public String getFullName() {
+		return fullName;
+	}
+
+	public Map<String, Affiliation> getAffiliations() {
+		return affiliations;
+	}
 
 	@Override
 	public String toString() {
@@ -60,7 +68,8 @@ public class Person {
 
 		for (Affiliation affiliation : affiliations.values()) {
 			String role = affiliation.getMembers().get(userid);
-			builder.append("\n\t\t").append(affiliation.getClass().getSimpleName()).append(": ").append(affiliation.getFullName()).append(" - ").append(role);
+			builder.append("\n\t\t").append(affiliation.getClass().getSimpleName()).append(": ").append(affiliation.getFullName())
+					.append(" - ").append(role);
 		}
 		builder.append("\n}\n");
 		return builder.toString();

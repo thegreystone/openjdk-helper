@@ -1,13 +1,14 @@
 [![CI](https://github.com/thegreystone/openjdk-helper/actions/workflows/ci.yml/badge.svg)](https://github.com/thegreystone/openjdk-helper/actions/workflows/ci.yml)
 [![Java Version](https://img.shields.io/badge/Java-17%2B-blue)](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html)
-[![Quarkus](https://img.shields.io/badge/Quarkus-3.12.3-blue.svg?style=flat&logo=quarkus)](https://quarkus.io/)
+[![Quarkus](https://img.shields.io/badge/Quarkus-3.20.0-blue.svg?style=flat&logo=quarkus)](https://quarkus.io/)
 [![Docker Pulls](https://img.shields.io/docker/pulls/greystone/openjdk-helper.svg)](https://hub.docker.com/r/greystone/openjdk-helper)
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 [![Version](https://img.shields.io/docker/v/greystone/openjdk-helper?sort=semver)](https://hub.docker.com/r/greystone/openjdk-helper)
 
 # openjdk-helper
 
-This is a simple service meant to help with OpenJDK project activities. It is being used by my [OpenJDK Project Assistant](https://chatgpt.com/g/g-cdK5pudqC-openjdk-project-assistant) Custom GPT. 
+This is a simple service and MCP server meant to help with OpenJDK project activities. It is being used by my [OpenJDK Project Assistant](https://chatgpt.com/g/g-cdK5pudqC-openjdk-project-assistant) 
+Custom GPT, and can also be used in stdio MCP mode, together with e.g. Claude Desktop.
 
 ## Using the openjdk-helper
 
@@ -18,6 +19,93 @@ https://api.hirt.se/openjdk/swagger-ui/
 
 Or in openapi format here:  
 https://api.hirt.se/openjdk/openapi/
+
+## MCP Server
+
+In addition to the OpenAPI interface, this service provides Model Context Protocol (MCP) integration for AI assistants like Claude, VS Code, and other MCP clients.
+This enables AI assistants to directly access information about OpenJDK projects, people, and GitHub repositories.
+
+### Available MCP Tools
+
+The OpenJDK Helper offers these MCP tools:
+
+- **version**: Get the service version information
+- **searchPeople**: Search for people in the OpenJDK census by name or username
+- **getPerson**: Get a person's details from the OpenJDK census by ID/username
+- **searchProjects**: Search for projects in the OpenJDK census
+- **getProject**: Get project details by ID
+- **searchGroups**: Search for groups in the OpenJDK census
+- **getGroup**: Get group details by ID
+- **getGitHubRepos**: Get GitHub repositories for a user
+- **getGitHubPulls**: Get pull requests for a GitHub repository
+
+### Transport Options
+
+The MCP functionality is available through multiple transport options:
+
+#### 1. SSE (Server-Sent Events)
+
+The SSE-based MCP endpoint is available at:
+
+```
+https://api.hirt.se/openjdk/mcp/sse
+```
+
+To connect using the MCP Inspector:
+
+```bash
+# Connect to the production server
+npx @modelcontextprotocol/inspector https://api.hirt.se/openjdk/mcp --transport-type=sse
+
+# Or for local development
+npx @modelcontextprotocol/inspector http://localhost:8080/mcp --transport-type=sse
+```
+
+#### 2. Stdio
+
+The openjdk-helper can also run in stdio mode, allowing direct integration via standard input/output:
+
+```bash
+# Enable stdio mode (disabled by default)
+java -Dquarkus.mcp.server.stdio.enabled=true -jar target/openjdk-helper-[version]-runner.jar
+```
+
+### Integrating with AI Assistants
+
+Some AI assistants can access the openjdk helper directly. Some will need a bit of work. Here are some examples.
+
+#### ChatGPT / CustomGPT
+
+A ChatGPT Custom GPT can easily use the service running at hirt.se to define new define new Actions.
+
+An example schema is provided here: https://github.com/thegreystone/openjdk-helper/blob/main/examples/customgpt.txt
+See also: https://api.hirt.se/openjdk/swagger-ui/
+
+#### Claude Desktop
+
+Claude Desktop currently only supports MCP servers running in stdio mode, so the openjdk helper will have to be built and run by Claude Desktop.
+
+First build the uber jar:
+```bash
+./mvnw package -Dquarkus.package.jar.type=uber-jar
+```
+
+Then edit the Claude Desktop file named claude_desktop_config.json (on windows it can be found under C:\Users\\[UserName]\AppData\Roaming\Claude) to start the openjdk-helper, for example:
+
+```bash
+{
+  "mcpServers": {
+    "openjdk-helper": {
+      "command": "java",
+      "args": [
+        "-Dquarkus.mcp.server.stdio.enabled=true",
+        "-jar",
+        "C:\\Users\\Marcus\\git\\me\\openjdk-helper\\target\\openjdk-helper-0.0.8-SNAPSHOT-runner.jar"
+      ]
+    }
+  }
+}
+```
 
 ## Running the application in dev mode
 
