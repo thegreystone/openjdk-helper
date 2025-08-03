@@ -31,7 +31,7 @@ The OpenJDK Helper offers these MCP tools:
 
 - **version**: Get the service version information
 - **searchPeople**: Search for people in the OpenJDK census by name or username
-- **getPerson**: Get a person's details from the OpenJDK census by ID/username
+- **getPerson**: Get a person's details from the OpenJDK census by ID/username or a comma-separated list of IDs
 - **searchProjects**: Search for projects in the OpenJDK census
 - **getProject**: Get project details by ID
 - **searchGroups**: Search for groups in the OpenJDK census

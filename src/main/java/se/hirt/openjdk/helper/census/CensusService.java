@@ -40,23 +40,43 @@ public class CensusService {
 	@Inject
 	OpenjdkCensusScraper census;
 
-	public Response getPeople(String userId) {
+	public Response getPeople(String userIdParam) {
 		Map<String, Person> allPeople = census.getPeople();
-		Collection<Person> people;
-		if (userId == null || userId.trim().isEmpty()) {
+		Collection<Person> people = new HashSet<>();
+		List<String> notFoundIds = new ArrayList<>();
+
+		if (userIdParam == null || userIdParam.trim().isEmpty()) {
 			people = allPeople.values();
 		} else {
-			people = new HashSet<>();
-			Person person = allPeople.get(userId.trim());
-			if (person == null) {
-				return Response.status(Response.Status.NOT_FOUND)
-						.entity("{\"error\": \"Could not find person with userid " + userId + "\"}").build();
+			String[] userIds = userIdParam.split(",");
+
+			for (String userId : userIds) {
+				String trimmedId = userId.trim();
+				if (!trimmedId.isEmpty()) {
+					Person person = allPeople.get(trimmedId);
+					if (person != null) {
+						people.add(person);
+					} else {
+						notFoundIds.add(trimmedId);
+					}
+				}
 			}
-			people.add(person);
+			if (people.isEmpty()) {
+				if (userIds.length == 1) {
+					return Response.status(Response.Status.NOT_FOUND)
+							.entity("{\"error\": \"Could not find person with userid " + userIdParam + "\"}").build();
+				} else {
+					return Response.status(Response.Status.NOT_FOUND)
+							.entity("{\"error\": \"Could not find any people with the provided userids: " + userIdParam + "\"}").build();
+				}
+			}
 		}
 
 		Map<String, Object> result = new HashMap<>();
-		result.put("userid", userId);
+		result.put("userid", userIdParam);
+		if (!notFoundIds.isEmpty()) {
+			result.put("not_found", notFoundIds);
+		}
 		result.put("results", people.stream().map(CensusService::personToMap).collect(Collectors.toList()));
 		return Response.ok(result).build();
 	}

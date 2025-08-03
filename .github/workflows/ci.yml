@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        java-version: [17]  # Currently only 17, but easily extendable
+        java-version: [ 17 ]  # Currently only 17, but easily extendable
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

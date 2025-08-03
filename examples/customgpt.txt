@@ -111,14 +111,14 @@ paths:
       tags:
         - Census Resource
       summary: Retrieve people information
-      description: Lists the person with the provided userid, or all people in OpenJDK if userid isn't provided.
+      description: Lists the person(s) with the provided userid(s), or all people in OpenJDK if userid isn't provided.
       parameters:
         - name: userid
           in: query
-          description: Lists the person with the userid, or all people in OpenJDK if userid isn't provided.
+          description: Lists the person(s) with the specified userid(s). Multiple IDs can be provided as a comma-separated list (e.g., 'hirt,duke,iris'). If no userid is provided, returns all people in OpenJDK.
           schema:
             type: string
-          example: hirt
+          example: hirt,duke
       responses:
         "200":
           description: A list of people or a specific person
@@ -129,6 +129,11 @@ paths:
                 properties:
                   userid:
                     type: string
+                  not_found:
+                    type: array
+                    description: Array of userids that could not be found (only present when some requested IDs weren't found)
+                    items:
+                      type: string
                   results:
                     type: array
                     items:

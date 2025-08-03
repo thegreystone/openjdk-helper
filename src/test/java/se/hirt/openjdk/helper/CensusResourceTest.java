@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2024 Marcus Hirt
- *                    www.hirt.se
+ * Copyright (C) 2024-2025 Marcus Hirt
  *
  * This software is free:
  *
@@ -26,8 +25,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Copyright (C) Marcus Hirt, 2024
  */
 package se.hirt.openjdk.helper;
 
@@ -63,5 +60,46 @@ public class CensusResourceTest {
 	@Test
 	public void testSearchPeopleEndpointEmptyQuery() {
 		given().when().get("/census/people/search?query=").then().statusCode(400).body("error", is("Query parameter is required"));
+	}
+	
+	@Test
+	public void testGetSinglePerson() {
+		given().when().get("/census/people?userid=hirt").then().statusCode(200)
+				.body("userid", is("hirt"))
+				.body("results", hasSize(1))
+				.body("results[0].userId", is("hirt"))
+				.body("results[0].fullName", notNullValue())
+				.body("not_found", is(nullValue()));
+	}
+	
+	@Test
+	public void testGetSinglePersonNotFound() {
+		given().when().get("/census/people?userid=idontexist").then().statusCode(404)
+				.body("error", is("Could not find person with userid idontexist"));
+	}
+	
+	@Test
+	public void testGetMultiplePersons() {
+		given().when().get("/census/people?userid=hirt,aptmac").then().statusCode(200)
+				.body("userid", is("hirt,aptmac"))
+				.body("results", hasSize(2))
+				.body("results.userId", hasItems("hirt", "aptmac"))
+				.body("not_found", is(nullValue()));
+	}
+	
+	@Test
+	public void testGetMultiplePersonsWithSomeNotFound() {
+		given().when().get("/census/people?userid=hirt,aptmac,idontexist").then().statusCode(200)
+				.body("userid", is("hirt,aptmac,idontexist"))
+				.body("results", hasSize(2))
+				.body("results.userId", hasItems("hirt", "aptmac"))
+				.body("not_found", hasSize(1))
+				.body("not_found", hasItem("idontexist"));
+	}
+	
+	@Test
+	public void testGetMultiplePersonsAllNotFound() {
+		given().when().get("/census/people?userid=idontexist1,idontexist2").then().statusCode(404)
+				.body("error", is("Could not find any people with the provided userids: idontexist1,idontexist2"));
 	}
 }
