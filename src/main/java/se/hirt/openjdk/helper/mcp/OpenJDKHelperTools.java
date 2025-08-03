@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Marcus Hirt
+ * Copyright (C) 2024-2025 Marcus Hirt
  *
  * This software is free:
  *
@@ -87,25 +87,25 @@ public class OpenJDKHelperTools {
 	}
 
 	/**
-	 * Get a person from the OpenJDK census by their ID.
+	 * Get person(s) from the OpenJDK census by their ID(s).
 	 */
-	@Tool(description = "Get information about a person in the OpenJDK census by their ID.")
+	@Tool(description = "Get information about one or more people in the OpenJDK census by their IDs.")
 	public ToolResponse getPerson(
-			@ToolArg(description = "The person's ID or username") String userid) {
+			@ToolArg(description = "The person's ID or username, or a comma-separated list of IDs") String userid) {
 		try {
-			LOG.info("MCP tool: Getting person with ID: " + userid);
+			LOG.info("MCP tool: Getting person(s) with ID(s): " + userid);
 			CensusService censusService = helperService.getCensusService();
 			Response response = censusService.getPeople(userid);
 
 			if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-				LOG.error("Error fetching person: " + response.getEntity().toString());
-				return new ToolResponse(true, List.of(new TextContent("Error fetching person: " + response.getEntity().toString())));
+				LOG.error("Error fetching person(s): " + response.getEntity().toString());
+				return new ToolResponse(true, List.of(new TextContent("Error fetching person(s): " + response.getEntity().toString())));
 			}
 
 			return ToolResponse.success(new TextContent(response.getEntity().toString()));
 		} catch (Exception e) {
 			LOG.error("Error in getPerson", e);
-			return new ToolResponse(true, List.of(new TextContent("Error fetching person: " + e.getMessage())));
+			return new ToolResponse(true, List.of(new TextContent("Error fetching person(s): " + e.getMessage())));
 		}
 	}
 

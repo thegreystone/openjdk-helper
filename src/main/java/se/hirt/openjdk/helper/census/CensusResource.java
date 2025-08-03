@@ -47,7 +47,7 @@ public class CensusResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getPeople(
 			@QueryParam("userid")
-			@Parameter(description = "Lists the person with the userid, or all people in OpenJDK if userid isn't provided.", example = "hirt")
+			@Parameter(description = "Lists the person(s) with the specified userid(s). Multiple IDs can be provided as a comma-separated list (e.g., 'hirt,duke,iris'). If no userid is provided, returns all people in OpenJDK.", example = "hirt,duke")
 			String userId) {
 		return censusService.getPeople(userId);
 	}
