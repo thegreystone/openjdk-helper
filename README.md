@@ -79,7 +79,8 @@ Some AI assistants can access the openjdk helper directly. Some will need a bit 
 A ChatGPT Custom GPT can easily use the service running at hirt.se to define new define new Actions.
 
 An example schema is provided here: https://github.com/thegreystone/openjdk-helper/blob/main/examples/customgpt.txt
-See also: https://api.hirt.se/openjdk/swagger-ui/
+
+See also: [OpenJDK Project Assistant](https://chatgpt.com/g/g-cdK5pudqC-openjdk-project-assistant) and https://api.hirt.se/openjdk/swagger-ui/
 
 #### Claude Desktop
 
