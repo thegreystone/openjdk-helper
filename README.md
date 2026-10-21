@@ -9,6 +9,8 @@
 
 # OpenJDK Helper
 
+<img src="plugin/assets/duke-icon.png" alt="Duke-style OpenJDK Helper mascot" width="128" align="right">
+
 OpenJDK Helper gives an AI assistant reliable, source-backed answers about OpenJDK. Ask Claude or Codex who the Reviewers of a project are, whether a fix has been backported to 17u and 21u, what a JEP's status is, which pull requests are waiting for review, when JDK 27 enters rampdown, or how a Committer election works, and it answers from the census, JBS, GitHub, the JEP index, the release pages, the mailing list archives and the Developers' Guide, with links to the sources.
 
 It is built for OpenJDK contributors and project leads. Every tool is read-only and reports what the sources say, including when data is partial or unavailable, rather than guessing. The same 27 tools are available as an MCP server for AI clients and as a REST/OpenAPI service, which also powers the [OpenJDK Project Assistant](https://chatgpt.com/g/g-cdK5pudqC-openjdk-project-assistant) Custom GPT.
@@ -119,6 +121,17 @@ Then `codex mcp list` should show `openjdk-helper`.
 ### Other clients and local development
 
 Any client that speaks **Streamable HTTP** can use `https://api.hirt.se/openjdk/mcp`; legacy SSE clients can use `/mcp/sse`, and `/mcp-info` serves human-readable connection information. A locally started server listens on `http://localhost:8080/mcp`. Clients that launch a stdio process use the executable with `-Dquarkus.profile=stdio` as shown above. The older `-Dquarkus.mcp.server.stdio.enabled=true` switch still works but leaves the HTTP listener enabled; prefer the profile.
+
+### ChatGPT and Codex plugin
+
+The [plugin source](plugin/README.md) combines OpenJDK contributor and project-lead instructions with the hosted MCP connection. Build its portable ZIP from this repository with Node.js 22 or later:
+
+```sh
+npm ci --prefix plugin --ignore-scripts
+node plugin/pack.mjs
+```
+
+This produces `target/openjdk-helper-<version>-plugin.zip`, using the version in `pom.xml`. See the [plugin guide](plugin/README.md) for local installation, tests and the remaining public-submission requirements. Public directory publication requires OpenAI review; building the ZIP does not publish it. The native `.mcpb` packages above continue to provide local stdio installations.
 
 ## Public service
 

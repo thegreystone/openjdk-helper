@@ -44,6 +44,9 @@ Thumbs.db
 *.env
 application-local.properties
 
+# Machine-specific Claude permissions and settings
+/.claude/settings.local.json
+
 # Compiled class files and build directories
 /target/
 /build/

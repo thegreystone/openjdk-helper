@@ -76,7 +76,8 @@ abstract class PackagedMcpTest {
 				assertFalse(version.body().contains("${"));
 				HttpResponse<String> openApi = get(http, base.resolve("/openapi?format=json"));
 				assertEquals(200, openApi.statusCode(), openApi.body());
-				var paths = McpTestClient.JSON.readTree(openApi.body()).path("paths");
+				var document = McpTestClient.JSON.readTree(openApi.body());
+				var paths = document.path("paths");
 				assertTrue(paths.has("/version"), openApi.body());
 				assertTrue(paths.has("/census/people"), openApi.body());
 				assertTrue(paths.has("/github/repos"), openApi.body());
@@ -91,6 +92,7 @@ abstract class PackagedMcpTest {
 				assertTrue(paths.has("/releases/jdk/{release}"), openApi.body());
 				assertTrue(paths.has("/mail/threads"), openApi.body());
 				assertTrue(paths.has("/guide/search"), openApi.body());
+				OpenApiAssertions.verifyImportable(document);
 				HttpResponse<String> swagger = get(http, base.resolve("/swagger-ui/"));
 				assertEquals(200, swagger.statusCode(), swagger.body());
 				assertTrue(swagger.body().contains("SwaggerUIBundle"), swagger.body());

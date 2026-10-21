@@ -198,6 +198,14 @@
         "operationId": "getProjectMembers",
         "parameters": [
           {
+            "name": "projectid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "limit",
             "in": "query",
             "schema": {
@@ -211,14 +219,6 @@
             "schema": {
               "type": "integer",
               "format": "int32"
-            }
-          },
-          {
-            "name": "projectid",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
             }
           },
           {
@@ -259,11 +259,45 @@
         "operationId": "getStatus",
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "Metadata about the loaded census snapshot",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/getStatusResponse"
+                  "type": "object",
+                  "properties": {
+                    "sourceUrl": {
+                      "description": "Census document the snapshot was read from",
+                      "type": "string"
+                    },
+                    "format": {
+                      "description": "Parsed document format, xml or html",
+                      "type": "string"
+                    },
+                    "sourceTime": {
+                      "description": "Timestamp published in the census document",
+                      "type": "string"
+                    },
+                    "lastSuccessfulRefresh": {
+                      "description": "When the snapshot was last refreshed successfully",
+                      "type": "string"
+                    },
+                    "lastRefreshAttempt": {
+                      "description": "When a refresh was last attempted",
+                      "type": "string"
+                    },
+                    "available": {
+                      "description": "Whether a census snapshot is loaded",
+                      "type": "boolean"
+                    },
+                    "stale": {
+                      "description": "Whether the snapshot is older than the refresh interval",
+                      "type": "boolean"
+                    },
+                    "lastRefreshFailed": {
+                      "description": "Whether the most recent refresh attempt failed",
+                      "type": "boolean"
+                    }
+                  }
                 }
               }
             }
@@ -317,11 +351,49 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "Verbatim build and test documentation excerpts from the repository",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/buildGuidanceResponse"
+                  "type": "object",
+                  "properties": {
+                    "owner": {
+                      "description": "Repository owner",
+                      "type": "string"
+                    },
+                    "repo": {
+                      "description": "Repository name",
+                      "type": "string"
+                    },
+                    "ref": {
+                      "description": "Git ref the documents were read from",
+                      "type": "string"
+                    },
+                    "repositoryUrl": {
+                      "description": "GitHub repository URL",
+                      "type": "string"
+                    },
+                    "topic": {
+                      "description": "Requested topic filter, empty when not given",
+                      "type": "string"
+                    },
+                    "test": {
+                      "description": "Requested test name or path, empty when not given",
+                      "type": "string"
+                    },
+                    "documents": {
+                      "description": "Repository documents with status, availability, url, path and matching excerpts",
+                      "type": "array",
+                      "items": {}
+                    },
+                    "problemLists": {
+                      "description": "Problem list matches for the requested test, present only when test is given"
+                    },
+                    "guidanceSemantics": {
+                      "description": "How to interpret the excerpts",
+                      "type": "string"
+                    }
+                  }
                 }
               }
             }
@@ -361,11 +433,72 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "Project identity and review rules resolved from the .jcheck/conf of the repository",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/contextResponse"
+                  "type": "object",
+                  "properties": {
+                    "owner": {
+                      "description": "Repository owner",
+                      "type": "string"
+                    },
+                    "repo": {
+                      "description": "Repository name",
+                      "type": "string"
+                    },
+                    "ref": {
+                      "description": "Git ref the configuration was read from",
+                      "type": "string"
+                    },
+                    "repositoryUrl": {
+                      "description": "GitHub repository URL",
+                      "type": "string"
+                    },
+                    "source": {
+                      "description": "Fetch metadata for .jcheck/conf: path, url, fetchedAt, cached and status"
+                    },
+                    "projectId": {
+                      "description": "Census project ID declared in .jcheck/conf",
+                      "type": "string"
+                    },
+                    "jbsProject": {
+                      "description": "JBS project key declared in .jcheck/conf",
+                      "type": "string"
+                    },
+                    "version": {
+                      "description": "Version declared in .jcheck/conf",
+                      "type": "string"
+                    },
+                    "reviewRules": {
+                      "description": "The [checks \"reviewers\"] section of .jcheck/conf, for example minimum and role"
+                    },
+                    "committerRules": {
+                      "description": "The [checks \"committer\"] section of .jcheck/conf"
+                    },
+                    "checks": {
+                      "description": "The [checks] section of .jcheck/conf, for example error and warning lists"
+                    },
+                    "ruleSemantics": {
+                      "description": "How to interpret the rule values",
+                      "type": "string"
+                    },
+                    "censusUrl": {
+                      "description": "Census page of the resolved project",
+                      "type": "string"
+                    },
+                    "censusMembers": {
+                      "description": "Project members with exact census roles, as returned by the members endpoint"
+                    },
+                    "censusStatus": {
+                      "description": "HTTP status of the census member lookup",
+                      "type": "integer"
+                    },
+                    "memberSemantics": {
+                      "description": "How to interpret the member list",
+                      "type": "string"
+                    }
+                  }
                 }
               }
             }
@@ -429,11 +562,58 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "Repository activity in the period",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/getProjectActivityResponse"
+                  "type": "object",
+                  "properties": {
+                    "repository": {
+                      "description": "owner/repo",
+                      "type": "string"
+                    },
+                    "since": {
+                      "description": "Start date, inclusive",
+                      "type": "string"
+                    },
+                    "until": {
+                      "description": "End date, inclusive",
+                      "type": "string"
+                    },
+                    "integrated": {
+                      "description": "total, scanned, hasMore, authors ranked by integrations and recent pull requests"
+                    },
+                    "openedPullRequests": {
+                      "description": "Pull requests opened in the period",
+                      "type": "integer"
+                    },
+                    "firstTimeContributors": {
+                      "description": "Authors with no earlier integrated pull request in the repository",
+                      "type": "array",
+                      "items": {}
+                    },
+                    "firstTimeCheck": {
+                      "description": "checkedAuthors and uncheckedAuthors"
+                    },
+                    "semantics": {
+                      "description": "How integrated and first-time contributors are defined",
+                      "type": "string"
+                    },
+                    "status": {
+                      "description": "complete when every upstream request succeeded, otherwise partial",
+                      "type": "string"
+                    },
+                    "sources": {
+                      "description": "Upstream requests made, each with url, fetchedAt and cached",
+                      "type": "array",
+                      "items": {}
+                    },
+                    "problems": {
+                      "description": "Upstream requests that failed, each with url, status and message",
+                      "type": "array",
+                      "items": {}
+                    }
+                  }
                 }
               }
             }
@@ -498,11 +678,41 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "Commit and pull-request evidence for a change in each target repository",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/getBackportStatusResponse"
+                  "type": "object",
+                  "properties": {
+                    "sourceCommit": {
+                      "description": "Original commit with sha, html_url and commit message"
+                    },
+                    "sourceRepository": {
+                      "description": "owner/repo of the original commit",
+                      "type": "string"
+                    },
+                    "source": {
+                      "description": "Fetch metadata for the original commit"
+                    },
+                    "issues": {
+                      "description": "JBS issues referenced by the commit message, each with id and url",
+                      "type": "array",
+                      "items": {}
+                    },
+                    "targets": {
+                      "description": "Per-target results with repository, branch, status, evidence, partial, sources and problems",
+                      "type": "array",
+                      "items": {}
+                    },
+                    "searchLimit": {
+                      "description": "Search page size used per target",
+                      "type": "integer"
+                    },
+                    "interpretation": {
+                      "description": "How to interpret found, not_found_in_search, partial and unknown",
+                      "type": "string"
+                    }
+                  }
                 }
               }
             }
@@ -558,11 +768,50 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "Pull request history of one GitHub login in a repository",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/getContributorRecordResponse"
+                  "type": "object",
+                  "properties": {
+                    "repository": {
+                      "description": "owner/repo",
+                      "type": "string"
+                    },
+                    "login": {
+                      "description": "GitHub login of the contributor",
+                      "type": "string"
+                    },
+                    "integratedPullRequests": {
+                      "description": "total, firstIntegratedAt, lastIntegratedAt, earliest and latest examples"
+                    },
+                    "openPullRequests": {
+                      "description": "Open pull requests by the contributor",
+                      "type": "integer"
+                    },
+                    "closedWithoutIntegration": {
+                      "description": "Closed pull requests that were never integrated",
+                      "type": "integer"
+                    },
+                    "semantics": {
+                      "description": "How the counts are derived",
+                      "type": "string"
+                    },
+                    "status": {
+                      "description": "complete when every upstream request succeeded, otherwise partial",
+                      "type": "string"
+                    },
+                    "sources": {
+                      "description": "Upstream requests made, each with url, fetchedAt and cached",
+                      "type": "array",
+                      "items": {}
+                    },
+                    "problems": {
+                      "description": "Upstream requests that failed, each with url, status and message",
+                      "type": "array",
+                      "items": {}
+                    }
+                  }
                 }
               }
             }
@@ -761,11 +1010,90 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "Review evidence for one pull request at its recorded head commit",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/getReviewContextResponse"
+                  "type": "object",
+                  "properties": {
+                    "repository": {
+                      "description": "owner/repo",
+                      "type": "string"
+                    },
+                    "pullRequest": {
+                      "description": "Pull request fields including the full body with its Skara sections"
+                    },
+                    "headSha": {
+                      "description": "Head commit the evidence was collected for",
+                      "type": "string"
+                    },
+                    "issues": {
+                      "description": "JBS issues referenced by the pull request, each with id and url",
+                      "type": "array",
+                      "items": {}
+                    },
+                    "skaraSections": {
+                      "description": "Skara body sections keyed by heading, for example Progress, Issue and Reviewers"
+                    },
+                    "skaraReviewers": {
+                      "description": "Reviewers from the Skara section with name, openjdkId, login and skaraRole",
+                      "type": "array",
+                      "items": {}
+                    },
+                    "skaraBlockers": {
+                      "description": "Lines of the Skara Error section",
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "skaraWarnings": {
+                      "description": "Lines of the Skara Warning section",
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "reviews": {
+                      "description": "GitHub reviews with user, state and submitted_at",
+                      "type": "array",
+                      "items": {}
+                    },
+                    "reviewRoleSemantics": {
+                      "description": "How Skara roles relate to GitHub reviews",
+                      "type": "string"
+                    },
+                    "checks": {
+                      "description": "GitHub check runs at the head commit",
+                      "type": "array",
+                      "items": {}
+                    },
+                    "commitStatus": {
+                      "description": "Combined GitHub commit status at the head commit"
+                    },
+                    "integrationReadiness": {
+                      "description": "Always not_assessed; readiness is decided by Skara and the project",
+                      "type": "string"
+                    },
+                    "assessment": {
+                      "description": "How to interpret the evidence",
+                      "type": "string"
+                    },
+                    "status": {
+                      "description": "complete when every upstream request succeeded, otherwise partial",
+                      "type": "string"
+                    },
+                    "sources": {
+                      "description": "Upstream requests made, each with url, fetchedAt and cached",
+                      "type": "array",
+                      "items": {}
+                    },
+                    "problems": {
+                      "description": "Upstream requests that failed, each with url, status and message",
+                      "type": "array",
+                      "items": {}
+                    }
+                  }
                 }
               }
             }
@@ -820,11 +1148,57 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "Open pull requests grouped by Skara state",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/getPullRequestTriageResponse"
+                  "type": "object",
+                  "properties": {
+                    "repository": {
+                      "description": "owner/repo",
+                      "type": "string"
+                    },
+                    "scanned": {
+                      "description": "Open pull requests scanned",
+                      "type": "integer"
+                    },
+                    "pages": {
+                      "description": "Pages of 100 scanned",
+                      "type": "integer"
+                    },
+                    "hasMore": {
+                      "description": "Whether open pull requests beyond the scanned pages exist",
+                      "type": "boolean"
+                    },
+                    "staleDays": {
+                      "description": "Idle days after which a pull request counts as stale",
+                      "type": "integer"
+                    },
+                    "groups": {
+                      "description": "readyToIntegrate, awaitingReview, blockedByErrors, csrPending, mergeConflict, stale, drafts and unlabeled, each with count, items and truncated"
+                    },
+                    "labelCounts": {
+                      "description": "Occurrences of each label among the scanned pull requests"
+                    },
+                    "groupSemantics": {
+                      "description": "How the groups are derived",
+                      "type": "string"
+                    },
+                    "status": {
+                      "description": "complete when every upstream request succeeded, otherwise partial",
+                      "type": "string"
+                    },
+                    "sources": {
+                      "description": "Upstream requests made, each with url, fetchedAt and cached",
+                      "type": "array",
+                      "items": {}
+                    },
+                    "problems": {
+                      "description": "Upstream requests that failed, each with url, status and message",
+                      "type": "array",
+                      "items": {}
+                    }
+                  }
                 }
               }
             }
@@ -865,9 +1239,7 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/searchDevelopersGuideResponse"
-                }
+                "schema": {}
               }
             }
           }
@@ -1055,9 +1427,7 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/getIssueFixStatusResponse"
-                }
+                "schema": {}
               }
             }
           }
@@ -1216,15 +1586,34 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/searchThreadsResponse"
-                }
+                "schema": {}
               }
             }
           }
         },
         "tags": [
           "Mailing List Resource"
+        ]
+      }
+    },
+    "/mcp-info": {
+      "get": {
+        "operationId": "mcpInfo",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Mcp Info",
+        "tags": [
+          "MCP Transport Resource"
         ]
       }
     },
@@ -1252,11 +1641,43 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "Curated process summaries with links to the governing documents",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/getProjectProcessesResponse"
+                  "type": "object",
+                  "properties": {
+                    "reviewedOn": {
+                      "description": "Date the summaries were last checked against their sources",
+                      "type": "string"
+                    },
+                    "scope": {
+                      "description": "What the summaries cover and how to use them",
+                      "type": "string"
+                    },
+                    "topics": {
+                      "description": "Topic IDs available for filtering",
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "results": {
+                      "description": "Process summaries with id, title, appliesTo, summary, steps and links",
+                      "type": "array",
+                      "items": {}
+                    },
+                    "project": {
+                      "description": "Resolved census project with name, id and censusUrl, present when projectid is given"
+                    },
+                    "censusMetadata": {
+                      "description": "Census snapshot metadata, present when projectid is given"
+                    },
+                    "projectContext": {
+                      "description": "Guidance on which tools give exact project data, present when projectid is given",
+                      "type": "string"
+                    }
+                  }
                 }
               }
             }
@@ -1288,9 +1709,7 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/getReleaseScheduleResponse"
-                }
+                "schema": {}
               }
             }
           }
@@ -1324,7 +1743,7 @@
   },
   "info": {
     "title": "openjdk-helper API",
-    "version": "0.2.0-SNAPSHOT"
+    "version": "0.2.1-SNAPSHOT"
   },
   "servers": [
     {
@@ -1333,457 +1752,6 @@
   ],
   "components": {
     "schemas": {
-      "buildGuidanceResponse": {
-        "type": "object",
-        "properties": {
-          "documents": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "available": {
-                  "type": "boolean"
-                },
-                "cached": {
-                  "type": "boolean"
-                },
-                "completeDocument": {
-                  "type": "boolean"
-                },
-                "excerptCharacterLimit": {
-                  "type": "integer"
-                },
-                "excerpts": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "clipped": {
-                        "type": "boolean"
-                      },
-                      "endLine": {
-                        "type": "integer"
-                      },
-                      "startLine": {
-                        "type": "integer"
-                      },
-                      "text": {
-                        "type": "string"
-                      }
-                    },
-                    "additionalProperties": true
-                  }
-                },
-                "fetchedAt": {
-                  "type": "string"
-                },
-                "matched": {
-                  "type": "boolean"
-                },
-                "path": {
-                  "type": "string"
-                },
-                "status": {
-                  "type": "integer"
-                },
-                "url": {
-                  "type": "string"
-                }
-              },
-              "additionalProperties": true
-            }
-          },
-          "guidanceSemantics": {
-            "type": "string"
-          },
-          "owner": {
-            "type": "string"
-          },
-          "ref": {
-            "type": "string"
-          },
-          "repo": {
-            "type": "string"
-          },
-          "repositoryUrl": {
-            "type": "string"
-          },
-          "test": {
-            "type": "string"
-          },
-          "topic": {
-            "type": "string"
-          }
-        },
-        "additionalProperties": true
-      },
-      "contextResponse": {
-        "type": "object",
-        "properties": {
-          "censusMembers": {
-            "type": "object",
-            "properties": {
-              "censusUrl": {
-                "type": "string"
-              },
-              "hasMore": {
-                "type": "boolean"
-              },
-              "limit": {
-                "type": "integer"
-              },
-              "metadata": {
-                "type": "object",
-                "properties": {
-                  "available": {
-                    "type": "boolean"
-                  },
-                  "format": {
-                    "type": "string"
-                  },
-                  "lastRefreshAttempt": {
-                    "type": "string"
-                  },
-                  "lastRefreshFailed": {
-                    "type": "boolean"
-                  },
-                  "lastSuccessfulRefresh": {
-                    "type": "string"
-                  },
-                  "sourceTime": {
-                    "type": "string"
-                  },
-                  "sourceUrl": {
-                    "type": "string"
-                  },
-                  "stale": {
-                    "type": "boolean"
-                  }
-                },
-                "additionalProperties": true
-              },
-              "offset": {
-                "type": "integer"
-              },
-              "projectId": {
-                "type": "string"
-              },
-              "projectName": {
-                "type": "string"
-              },
-              "query": {},
-              "results": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "censusUrl": {
-                      "type": "string"
-                    },
-                    "fullName": {
-                      "type": "string"
-                    },
-                    "role": {
-                      "type": "string"
-                    },
-                    "userId": {
-                      "type": "string"
-                    }
-                  },
-                  "additionalProperties": true
-                }
-              },
-              "roleSemantics": {
-                "type": "string"
-              },
-              "roles": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "total": {
-                "type": "integer"
-              }
-            },
-            "additionalProperties": true
-          },
-          "censusStatus": {
-            "type": "integer"
-          },
-          "censusUrl": {
-            "type": "string"
-          },
-          "checks": {
-            "type": "object",
-            "properties": {
-              "error": {
-                "type": "string"
-              },
-              "warning": {
-                "type": "string"
-              }
-            },
-            "additionalProperties": true
-          },
-          "committerRules": {
-            "type": "object",
-            "properties": {
-              "role": {
-                "type": "string"
-              }
-            },
-            "additionalProperties": true
-          },
-          "jbsProject": {
-            "type": "string"
-          },
-          "memberSemantics": {
-            "type": "string"
-          },
-          "owner": {
-            "type": "string"
-          },
-          "projectId": {
-            "type": "string"
-          },
-          "ref": {
-            "type": "string"
-          },
-          "repo": {
-            "type": "string"
-          },
-          "repositoryUrl": {
-            "type": "string"
-          },
-          "reviewRules": {
-            "type": "object",
-            "properties": {
-              "ignore": {
-                "type": "string"
-              },
-              "reviewers": {
-                "type": "string"
-              }
-            },
-            "additionalProperties": true
-          },
-          "ruleSemantics": {
-            "type": "string"
-          },
-          "source": {
-            "type": "object",
-            "properties": {
-              "cached": {
-                "type": "boolean"
-              },
-              "fetchedAt": {
-                "type": "string"
-              },
-              "path": {
-                "type": "string"
-              },
-              "status": {
-                "type": "integer"
-              },
-              "url": {
-                "type": "string"
-              }
-            },
-            "additionalProperties": true
-          },
-          "version": {
-            "type": "string"
-          }
-        },
-        "additionalProperties": true
-      },
-      "getBackportStatusResponse": {
-        "type": "object",
-        "properties": {
-          "interpretation": {
-            "type": "string"
-          },
-          "issues": {
-            "type": "array",
-            "items": {}
-          },
-          "searchLimit": {
-            "type": "integer"
-          },
-          "source": {
-            "type": "object",
-            "properties": {
-              "cached": {
-                "type": "boolean"
-              },
-              "fetchedAt": {
-                "type": "string"
-              },
-              "url": {
-                "type": "string"
-              }
-            },
-            "additionalProperties": true
-          },
-          "sourceCommit": {
-            "type": "object",
-            "properties": {
-              "commit": {
-                "type": "object",
-                "properties": {
-                  "author": {
-                    "type": "object",
-                    "properties": {
-                      "date": {
-                        "type": "string"
-                      },
-                      "email": {
-                        "type": "string"
-                      },
-                      "name": {
-                        "type": "string"
-                      }
-                    },
-                    "additionalProperties": true
-                  },
-                  "comment_count": {
-                    "type": "integer"
-                  },
-                  "committer": {
-                    "type": "object",
-                    "properties": {
-                      "date": {
-                        "type": "string"
-                      },
-                      "email": {
-                        "type": "string"
-                      },
-                      "name": {
-                        "type": "string"
-                      }
-                    },
-                    "additionalProperties": true
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "tree": {
-                    "type": "object",
-                    "properties": {
-                      "sha": {
-                        "type": "string"
-                      },
-                      "url": {
-                        "type": "string"
-                      }
-                    },
-                    "additionalProperties": true
-                  },
-                  "url": {
-                    "type": "string"
-                  },
-                  "verification": {
-                    "type": "object",
-                    "properties": {
-                      "payload": {},
-                      "reason": {
-                        "type": "string"
-                      },
-                      "signature": {},
-                      "verified": {
-                        "type": "boolean"
-                      },
-                      "verified_at": {}
-                    },
-                    "additionalProperties": true
-                  }
-                },
-                "additionalProperties": true
-              },
-              "html_url": {
-                "type": "string"
-              },
-              "sha": {
-                "type": "string"
-              }
-            },
-            "additionalProperties": true
-          },
-          "sourceRepository": {
-            "type": "string"
-          },
-          "targets": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "branch": {
-                  "type": "string"
-                },
-                "evidence": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "kind": {
-                        "type": "string"
-                      },
-                      "sha": {
-                        "type": "string"
-                      },
-                      "url": {
-                        "type": "string"
-                      }
-                    },
-                    "additionalProperties": true
-                  }
-                },
-                "partial": {
-                  "type": "boolean"
-                },
-                "problems": {
-                  "type": "array",
-                  "items": {}
-                },
-                "repository": {
-                  "type": "string"
-                },
-                "sources": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "cached": {
-                        "type": "boolean"
-                      },
-                      "fetchedAt": {
-                        "type": "string"
-                      },
-                      "url": {
-                        "type": "string"
-                      }
-                    },
-                    "additionalProperties": true
-                  }
-                },
-                "status": {
-                  "type": "string"
-                },
-                "targetHeadSha": {
-                  "type": "string"
-                }
-              },
-              "additionalProperties": true
-            }
-          }
-        },
-        "additionalProperties": true
-      },
-      "getContributorRecordResponse": {
-        "type": "object",
-        "additionalProperties": true
-      },
       "getGroupsResponse": {
         "type": "object",
         "properties": {
@@ -1851,10 +1819,6 @@
             }
           }
         },
-        "additionalProperties": true
-      },
-      "getIssueFixStatusResponse": {
-        "type": "object",
         "additionalProperties": true
       },
       "getIssueResponse": {
@@ -2118,10 +2082,6 @@
         },
         "additionalProperties": true
       },
-      "getProjectActivityResponse": {
-        "type": "object",
-        "additionalProperties": true
-      },
       "getProjectMembersResponse": {
         "type": "object",
         "properties": {
@@ -2210,114 +2170,6 @@
         },
         "additionalProperties": true
       },
-      "getProjectProcessesResponse": {
-        "type": "object",
-        "properties": {
-          "censusMetadata": {
-            "type": "object",
-            "properties": {
-              "available": {
-                "type": "boolean"
-              },
-              "format": {
-                "type": "string"
-              },
-              "lastRefreshAttempt": {
-                "type": "string"
-              },
-              "lastRefreshFailed": {
-                "type": "boolean"
-              },
-              "lastSuccessfulRefresh": {
-                "type": "string"
-              },
-              "sourceTime": {
-                "type": "string"
-              },
-              "sourceUrl": {
-                "type": "string"
-              },
-              "stale": {
-                "type": "boolean"
-              }
-            },
-            "additionalProperties": true
-          },
-          "project": {
-            "type": "object",
-            "properties": {
-              "censusUrl": {
-                "type": "string"
-              },
-              "id": {
-                "type": "string"
-              },
-              "name": {
-                "type": "string"
-              }
-            },
-            "additionalProperties": true
-          },
-          "projectContext": {
-            "type": "string"
-          },
-          "results": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "appliesTo": {
-                  "type": "string"
-                },
-                "id": {
-                  "type": "string"
-                },
-                "links": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "title": {
-                        "type": "string"
-                      },
-                      "url": {
-                        "type": "string"
-                      }
-                    },
-                    "additionalProperties": true
-                  }
-                },
-                "steps": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                "summary": {
-                  "type": "string"
-                },
-                "title": {
-                  "type": "string"
-                }
-              },
-              "additionalProperties": true
-            }
-          },
-          "reviewedOn": {
-            "type": "string"
-          },
-          "scope": {
-            "type": "string"
-          },
-          "topics": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        },
-        "additionalProperties": true
-      },
       "getProjectsResponse": {
         "type": "object",
         "properties": {
@@ -2385,10 +2237,6 @@
             }
           }
         },
-        "additionalProperties": true
-      },
-      "getPullRequestTriageResponse": {
-        "type": "object",
         "additionalProperties": true
       },
       "getPullRequestsResponse": {
@@ -2495,10 +2343,6 @@
           "additionalProperties": true
         }
       },
-      "getReleaseScheduleResponse": {
-        "type": "object",
-        "additionalProperties": true
-      },
       "getRepositoriesResponse": {
         "type": "array",
         "items": {
@@ -2540,309 +2384,6 @@
           },
           "additionalProperties": true
         }
-      },
-      "getReviewContextResponse": {
-        "type": "object",
-        "properties": {
-          "assessment": {
-            "type": "string"
-          },
-          "checks": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "completed_at": {
-                  "type": "string"
-                },
-                "conclusion": {
-                  "type": "string"
-                },
-                "details_url": {
-                  "type": "string"
-                },
-                "head_sha": {
-                  "type": "string"
-                },
-                "html_url": {
-                  "type": "string"
-                },
-                "name": {
-                  "type": "string"
-                },
-                "output": {
-                  "type": "object",
-                  "properties": {
-                    "annotations_count": {
-                      "type": "integer"
-                    },
-                    "annotations_url": {
-                      "type": "string"
-                    },
-                    "summary": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "text": {},
-                    "title": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  },
-                  "additionalProperties": true
-                },
-                "started_at": {
-                  "type": "string"
-                },
-                "status": {
-                  "type": "string"
-                }
-              },
-              "additionalProperties": true
-            }
-          },
-          "commitStatus": {
-            "type": "object",
-            "properties": {
-              "sha": {
-                "type": "string"
-              },
-              "state": {
-                "type": "string"
-              },
-              "statuses": {
-                "type": "array",
-                "items": {}
-              },
-              "total_count": {
-                "type": "integer"
-              }
-            },
-            "additionalProperties": true
-          },
-          "headSha": {
-            "type": "string"
-          },
-          "integrationReadiness": {
-            "type": "string"
-          },
-          "issues": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string"
-                },
-                "url": {
-                  "type": "string"
-                }
-              },
-              "additionalProperties": true
-            }
-          },
-          "problems": {
-            "type": "array",
-            "items": {}
-          },
-          "pullRequest": {
-            "type": "object",
-            "properties": {
-              "base": {
-                "type": "object",
-                "properties": {
-                  "label": {
-                    "type": "string"
-                  },
-                  "ref": {
-                    "type": "string"
-                  },
-                  "sha": {
-                    "type": "string"
-                  }
-                },
-                "additionalProperties": true
-              },
-              "body": {
-                "type": "string"
-              },
-              "closed_at": {},
-              "created_at": {
-                "type": "string"
-              },
-              "draft": {
-                "type": "boolean"
-              },
-              "head": {
-                "type": "object",
-                "properties": {
-                  "label": {
-                    "type": "string"
-                  },
-                  "ref": {
-                    "type": "string"
-                  },
-                  "sha": {
-                    "type": "string"
-                  }
-                },
-                "additionalProperties": true
-              },
-              "html_url": {
-                "type": "string"
-              },
-              "labels": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "archived_at": {},
-                    "archived_by": {},
-                    "color": {
-                      "type": "string"
-                    },
-                    "default": {
-                      "type": "boolean"
-                    },
-                    "description": {
-                      "type": "string"
-                    },
-                    "id": {
-                      "type": "integer"
-                    },
-                    "name": {
-                      "type": "string"
-                    },
-                    "node_id": {
-                      "type": "string"
-                    },
-                    "url": {
-                      "type": "string"
-                    }
-                  },
-                  "additionalProperties": true
-                }
-              },
-              "mergeable": {
-                "type": "boolean"
-              },
-              "merged": {
-                "type": "boolean"
-              },
-              "merged_at": {},
-              "number": {
-                "type": "integer"
-              },
-              "requested_reviewers": {
-                "type": "array",
-                "items": {}
-              },
-              "state": {
-                "type": "string"
-              },
-              "title": {
-                "type": "string"
-              },
-              "updated_at": {
-                "type": "string"
-              },
-              "user": {
-                "type": "string"
-              }
-            },
-            "additionalProperties": true
-          },
-          "repository": {
-            "type": "string"
-          },
-          "reviews": {
-            "type": "array",
-            "items": {}
-          },
-          "skaraSections": {
-            "type": "object",
-            "properties": {
-              "Issue": {
-                "type": "string"
-              },
-              "Progress": {
-                "type": "string"
-              },
-              "Reviewing": {
-                "type": "string"
-              }
-            },
-            "additionalProperties": true
-          },
-          "sources": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "cached": {
-                  "type": "boolean"
-                },
-                "fetchedAt": {
-                  "type": "string"
-                },
-                "url": {
-                  "type": "string"
-                }
-              },
-              "additionalProperties": true
-            }
-          },
-          "status": {
-            "type": "string"
-          }
-        },
-        "additionalProperties": true
-      },
-      "getStatusResponse": {
-        "type": "object",
-        "properties": {
-          "available": {
-            "type": "boolean"
-          },
-          "format": {
-            "type": "string"
-          },
-          "lastRefreshAttempt": {
-            "type": "string"
-          },
-          "lastRefreshFailed": {
-            "type": "boolean"
-          },
-          "lastSuccessfulRefresh": {
-            "type": "string"
-          },
-          "sourceTime": {
-            "type": "string"
-          },
-          "sourceUrl": {
-            "type": "string"
-          },
-          "stale": {
-            "type": "boolean"
-          }
-        },
-        "additionalProperties": true
-      },
-      "searchDevelopersGuideResponse": {
-        "type": "object",
-        "additionalProperties": true
       },
       "searchGroupsResponse": {
         "type": "object",
@@ -3268,10 +2809,6 @@
             "type": "string"
           }
         },
-        "additionalProperties": true
-      },
-      "searchThreadsResponse": {
-        "type": "object",
         "additionalProperties": true
       }
     }

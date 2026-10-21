@@ -36,6 +36,11 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.media.SchemaProperty;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 
 @Path("/census")
@@ -46,6 +51,15 @@ public class CensusResource {
 	@GET
 	@Path("/status")
 	@Produces(MediaType.APPLICATION_JSON)
+	@APIResponse(responseCode = "200", description = "Metadata about the loaded census snapshot", content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(type = SchemaType.OBJECT, properties = {
+			@SchemaProperty(name = "sourceUrl", type = SchemaType.STRING, description = "Census document the snapshot was read from"),
+			@SchemaProperty(name = "format", type = SchemaType.STRING, description = "Parsed document format, xml or html"),
+			@SchemaProperty(name = "sourceTime", type = SchemaType.STRING, description = "Timestamp published in the census document"),
+			@SchemaProperty(name = "lastSuccessfulRefresh", type = SchemaType.STRING, description = "When the snapshot was last refreshed successfully"),
+			@SchemaProperty(name = "lastRefreshAttempt", type = SchemaType.STRING, description = "When a refresh was last attempted"),
+			@SchemaProperty(name = "available", type = SchemaType.BOOLEAN, description = "Whether a census snapshot is loaded"),
+			@SchemaProperty(name = "stale", type = SchemaType.BOOLEAN, description = "Whether the snapshot is older than the refresh interval"),
+			@SchemaProperty(name = "lastRefreshFailed", type = SchemaType.BOOLEAN, description = "Whether the most recent refresh attempt failed")})))
 	public java.util.Map<String, Object> getStatus() {
 		return censusService.getCensusStatus();
 	}

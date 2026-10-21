@@ -1,0 +1,87 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "openjdk-helper",
+  "description": "Source-backed OpenJDK contributor and project-lead assistance through the hosted OpenJDK Helper service.",
+  "author": {
+    "name": "Marcus Hirt",
+    "url": "https://www.hirt.se"
+  },
+  "homepage": "https://github.com/thegreystone/openjdk-helper",
+  "repository": "https://github.com/thegreystone/openjdk-helper",
+  "license": "BSD-3-Clause",
+  "keywords": ["openjdk", "java", "contributors", "reviews", "jbs", "jeps", "backports", "project-lead"],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "OpenJDK Helper",
+        "shortDescription": "Tools for OpenJDK contributors",
+        "longDescription": "Look up OpenJDK contributors and project roles, inspect JBS issues and backports, triage pull requests, find JEPs and release milestones, and understand contribution and project-lead processes. Answers link to census, JBS, GitHub, OpenJDK documentation and mailing-list sources. The hosted service is read-only and requires no account. Upstream access restrictions, stale snapshots and bounded searches can limit results; the assistant reports these limits. Maintained by Marcus Hirt as an independent community tool.",
+        "developerName": "Marcus Hirt",
+        "category": "Developer Tools",
+        "capabilities": ["Contributor lookup", "Issue and backport research", "Review triage", "Project-lead guidance"],
+        "websiteURL": "https://github.com/thegreystone/openjdk-helper",
+        "supportURL": "https://github.com/thegreystone/openjdk-helper/issues",
+        "defaultPrompt": [
+          "Who are the Reviewers in the JMC project?",
+          "Triage the open pull requests in openjdk/jmc.",
+          "Summarize the process for nominating a new OpenJDK Committer."
+        ],
+        "brandColor": "#175CD3",
+        "composerIcon": "./assets/duke-icon.png",
+        "logo": "./assets/duke-icon.png"
+      },
+      "review": {
+        "test_cases": {
+          "positive": [
+            {
+              "description": "Look up a project's Reviewers",
+              "prompt": "Who are the Reviewers in the JMC project?",
+              "tools_triggered": "getProjectMembers",
+              "expected_behavior": "Resolve the JMC census project, list members with the exact Reviewer role, and link to the census. State snapshot freshness and any pagination limits."
+            },
+            {
+              "description": "Summarize project governance",
+              "prompt": "As JMC project lead, how do I nominate a new Committer? Link the governing process.",
+              "tools_triggered": "getProjectProcesses",
+              "expected_behavior": "Summarize nomination, voting and follow-up from the returned process guidance, cite governing sources and its reviewed date, and avoid inventing eligibility or sending a nomination."
+            },
+            {
+              "description": "Triage repository pull requests",
+              "prompt": "Triage the open pull requests in openjdk/jmc.",
+              "tools_triggered": "getPullRequestTriage",
+              "expected_behavior": "Group available pull requests by reported Skara state with links and limitations. If access is rate limited or unavailable, report that explicitly. Do not claim that a ready classification guarantees integration."
+            },
+            {
+              "description": "Inspect a published JEP",
+              "prompt": "What does JEP 444 cover, and what is its status?",
+              "tools_triggered": "getJep",
+              "expected_behavior": "Retrieve JEP 444, summarize its reported status and content, and cite the official JEP URL. Distinguish the JEP's status from vendor availability."
+            },
+            {
+              "description": "Research issue fix and backport status",
+              "prompt": "Where has JDK-8394772 been fixed, and which linked backports are still pending?",
+              "tools_triggered": "getIssueFixStatus",
+              "expected_behavior": "Report fixed and pending releases from the issue and linked backports with JBS links. If JBS denies access, state that the status could not be established and provide the source link without inventing results."
+            }
+          ],
+          "negative": [
+            {
+              "description": "General Java syntax does not require OpenJDK project tools",
+              "prompt": "How do I sort a List<String> alphabetically in Java?"
+            },
+            {
+              "description": "The service cannot integrate changes",
+              "prompt": "Integrate pull request 123 in openjdk/jmc for me."
+            },
+            {
+              "description": "The service cannot change census roles",
+              "prompt": "Make my OpenJDK account a Reviewer in the JMC project."
+            }
+          ]
+        },
+        "commerce": false,
+        "commerce_description": "This plugin provides read-only project information and does not sell products or process payments."
+      }
+    }
+  }
+}

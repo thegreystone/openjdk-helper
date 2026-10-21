@@ -32,6 +32,11 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.media.SchemaProperty;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import java.util.Map;
 
@@ -77,6 +82,24 @@ public class GitHubResource {
 	@GET
 	@Path("/review")
 	@Produces(MediaType.APPLICATION_JSON)
+	@APIResponse(responseCode = "200", description = "Review evidence for one pull request at its recorded head commit", content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(type = SchemaType.OBJECT, properties = {
+			@SchemaProperty(name = "repository", type = SchemaType.STRING, description = "owner/repo"),
+			@SchemaProperty(name = "pullRequest", description = "Pull request fields including the full body with its Skara sections"),
+			@SchemaProperty(name = "headSha", type = SchemaType.STRING, description = "Head commit the evidence was collected for"),
+			@SchemaProperty(name = "issues", type = SchemaType.ARRAY, implementation = Object.class, description = "JBS issues referenced by the pull request, each with id and url"),
+			@SchemaProperty(name = "skaraSections", description = "Skara body sections keyed by heading, for example Progress, Issue and Reviewers"),
+			@SchemaProperty(name = "skaraReviewers", type = SchemaType.ARRAY, implementation = Object.class, description = "Reviewers from the Skara section with name, openjdkId, login and skaraRole"),
+			@SchemaProperty(name = "skaraBlockers", type = SchemaType.ARRAY, implementation = String.class, description = "Lines of the Skara Error section"),
+			@SchemaProperty(name = "skaraWarnings", type = SchemaType.ARRAY, implementation = String.class, description = "Lines of the Skara Warning section"),
+			@SchemaProperty(name = "reviews", type = SchemaType.ARRAY, implementation = Object.class, description = "GitHub reviews with user, state and submitted_at"),
+			@SchemaProperty(name = "reviewRoleSemantics", type = SchemaType.STRING, description = "How Skara roles relate to GitHub reviews"),
+			@SchemaProperty(name = "checks", type = SchemaType.ARRAY, implementation = Object.class, description = "GitHub check runs at the head commit"),
+			@SchemaProperty(name = "commitStatus", description = "Combined GitHub commit status at the head commit"),
+			@SchemaProperty(name = "integrationReadiness", type = SchemaType.STRING, description = "Always not_assessed; readiness is decided by Skara and the project"),
+			@SchemaProperty(name = "assessment", type = SchemaType.STRING, description = "How to interpret the evidence"),
+			@SchemaProperty(name = "status", type = SchemaType.STRING, description = "complete when every upstream request succeeded, otherwise partial"),
+			@SchemaProperty(name = "sources", type = SchemaType.ARRAY, implementation = Object.class, description = "Upstream requests made, each with url, fetchedAt and cached"),
+			@SchemaProperty(name = "problems", type = SchemaType.ARRAY, implementation = Object.class, description = "Upstream requests that failed, each with url, status and message")})))
 	public Map<String, Object> getReviewContext(@QueryParam("owner") @DefaultValue("openjdk")
 	String owner, @QueryParam("repo") @Parameter(required = true, description = "Repository name", example = "jdk")
 	String repo, @QueryParam("number") @Parameter(required = true, description = "Pull request number")
@@ -87,6 +110,14 @@ public class GitHubResource {
 	@GET
 	@Path("/backports")
 	@Produces(MediaType.APPLICATION_JSON)
+	@APIResponse(responseCode = "200", description = "Commit and pull-request evidence for a change in each target repository", content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(type = SchemaType.OBJECT, properties = {
+			@SchemaProperty(name = "sourceCommit", description = "Original commit with sha, html_url and commit message"),
+			@SchemaProperty(name = "sourceRepository", type = SchemaType.STRING, description = "owner/repo of the original commit"),
+			@SchemaProperty(name = "source", description = "Fetch metadata for the original commit"),
+			@SchemaProperty(name = "issues", type = SchemaType.ARRAY, implementation = Object.class, description = "JBS issues referenced by the commit message, each with id and url"),
+			@SchemaProperty(name = "targets", type = SchemaType.ARRAY, implementation = Object.class, description = "Per-target results with repository, branch, status, evidence, partial, sources and problems"),
+			@SchemaProperty(name = "searchLimit", type = SchemaType.INTEGER, description = "Search page size used per target"),
+			@SchemaProperty(name = "interpretation", type = SchemaType.STRING, description = "How to interpret found, not_found_in_search, partial and unknown")})))
 	public Map<String, Object> getBackportStatus(@QueryParam("owner") @DefaultValue("openjdk")
 	String owner, @QueryParam("repo") @Parameter(required = true, description = "Original repository", example = "jdk")
 	String repo,
@@ -102,6 +133,18 @@ public class GitHubResource {
 	@GET
 	@Path("/triage")
 	@Produces(MediaType.APPLICATION_JSON)
+	@APIResponse(responseCode = "200", description = "Open pull requests grouped by Skara state", content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(type = SchemaType.OBJECT, properties = {
+			@SchemaProperty(name = "repository", type = SchemaType.STRING, description = "owner/repo"),
+			@SchemaProperty(name = "scanned", type = SchemaType.INTEGER, description = "Open pull requests scanned"),
+			@SchemaProperty(name = "pages", type = SchemaType.INTEGER, description = "Pages of 100 scanned"),
+			@SchemaProperty(name = "hasMore", type = SchemaType.BOOLEAN, description = "Whether open pull requests beyond the scanned pages exist"),
+			@SchemaProperty(name = "staleDays", type = SchemaType.INTEGER, description = "Idle days after which a pull request counts as stale"),
+			@SchemaProperty(name = "groups", description = "readyToIntegrate, awaitingReview, blockedByErrors, csrPending, mergeConflict, stale, drafts and unlabeled, each with count, items and truncated"),
+			@SchemaProperty(name = "labelCounts", description = "Occurrences of each label among the scanned pull requests"),
+			@SchemaProperty(name = "groupSemantics", type = SchemaType.STRING, description = "How the groups are derived"),
+			@SchemaProperty(name = "status", type = SchemaType.STRING, description = "complete when every upstream request succeeded, otherwise partial"),
+			@SchemaProperty(name = "sources", type = SchemaType.ARRAY, implementation = Object.class, description = "Upstream requests made, each with url, fetchedAt and cached"),
+			@SchemaProperty(name = "problems", type = SchemaType.ARRAY, implementation = Object.class, description = "Upstream requests that failed, each with url, status and message")})))
 	public Map<String, Object> getPullRequestTriage(@QueryParam("owner") @DefaultValue("openjdk")
 	String owner, @QueryParam("repo") @Parameter(required = true, description = "Repository name", example = "jmc")
 	String repo,
@@ -115,6 +158,16 @@ public class GitHubResource {
 	@GET
 	@Path("/contributor")
 	@Produces(MediaType.APPLICATION_JSON)
+	@APIResponse(responseCode = "200", description = "Pull request history of one GitHub login in a repository", content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(type = SchemaType.OBJECT, properties = {
+			@SchemaProperty(name = "repository", type = SchemaType.STRING, description = "owner/repo"),
+			@SchemaProperty(name = "login", type = SchemaType.STRING, description = "GitHub login of the contributor"),
+			@SchemaProperty(name = "integratedPullRequests", description = "total, firstIntegratedAt, lastIntegratedAt, earliest and latest examples"),
+			@SchemaProperty(name = "openPullRequests", type = SchemaType.INTEGER, description = "Open pull requests by the contributor"),
+			@SchemaProperty(name = "closedWithoutIntegration", type = SchemaType.INTEGER, description = "Closed pull requests that were never integrated"),
+			@SchemaProperty(name = "semantics", type = SchemaType.STRING, description = "How the counts are derived"),
+			@SchemaProperty(name = "status", type = SchemaType.STRING, description = "complete when every upstream request succeeded, otherwise partial"),
+			@SchemaProperty(name = "sources", type = SchemaType.ARRAY, implementation = Object.class, description = "Upstream requests made, each with url, fetchedAt and cached"),
+			@SchemaProperty(name = "problems", type = SchemaType.ARRAY, implementation = Object.class, description = "Upstream requests that failed, each with url, status and message")})))
 	public Map<String, Object> getContributorRecord(@QueryParam("owner") @DefaultValue("openjdk")
 	String owner, @QueryParam("repo") @Parameter(required = true, description = "Repository name", example = "jmc")
 	String repo,
@@ -128,6 +181,18 @@ public class GitHubResource {
 	@GET
 	@Path("/activity")
 	@Produces(MediaType.APPLICATION_JSON)
+	@APIResponse(responseCode = "200", description = "Repository activity in the period", content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(type = SchemaType.OBJECT, properties = {
+			@SchemaProperty(name = "repository", type = SchemaType.STRING, description = "owner/repo"),
+			@SchemaProperty(name = "since", type = SchemaType.STRING, description = "Start date, inclusive"),
+			@SchemaProperty(name = "until", type = SchemaType.STRING, description = "End date, inclusive"),
+			@SchemaProperty(name = "integrated", description = "total, scanned, hasMore, authors ranked by integrations and recent pull requests"),
+			@SchemaProperty(name = "openedPullRequests", type = SchemaType.INTEGER, description = "Pull requests opened in the period"),
+			@SchemaProperty(name = "firstTimeContributors", type = SchemaType.ARRAY, implementation = Object.class, description = "Authors with no earlier integrated pull request in the repository"),
+			@SchemaProperty(name = "firstTimeCheck", description = "checkedAuthors and uncheckedAuthors"),
+			@SchemaProperty(name = "semantics", type = SchemaType.STRING, description = "How integrated and first-time contributors are defined"),
+			@SchemaProperty(name = "status", type = SchemaType.STRING, description = "complete when every upstream request succeeded, otherwise partial"),
+			@SchemaProperty(name = "sources", type = SchemaType.ARRAY, implementation = Object.class, description = "Upstream requests made, each with url, fetchedAt and cached"),
+			@SchemaProperty(name = "problems", type = SchemaType.ARRAY, implementation = Object.class, description = "Upstream requests that failed, each with url, status and message")})))
 	public Map<String, Object> getProjectActivity(@QueryParam("owner") @DefaultValue("openjdk")
 	String owner, @QueryParam("repo") @Parameter(required = true, description = "Repository name", example = "jmc")
 	String repo,

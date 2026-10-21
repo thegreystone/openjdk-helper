@@ -1,0 +1,9 @@
+{
+  "name": "openjdk-helper-plugin-tools",
+  "private": true,
+  "type": "module",
+  "description": "Build and structurally validate the portable OpenJDK Helper plugin",
+  "engines": { "node": ">=22" },
+  "scripts": { "test": "node --test test-plugin.mjs", "check": "node pack.mjs --check", "build": "node pack.mjs" },
+  "dependencies": { "fflate": "0.8.3" }
+}
