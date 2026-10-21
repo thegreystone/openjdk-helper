@@ -143,6 +143,18 @@ node mcpb/test-mcpb.mjs target/openjdk-helper-0.2.0-SNAPSHOT-windows-x86_64.mcpb
 
 Use the matching suffix and binary for Linux/macOS. Packaging validates the manifest and executable architecture. The smoke test extracts the finished archive and launches its manifest command to check MCP initialization, tool discovery and census lookup, clean stdout, and disabled HTTP binding. Node.js is only needed to build/test bundles, not to use them.
 
+### Signing release binaries
+
+The release workflow signs the macOS binary with a Developer ID certificate (hardened runtime, timestamp) and notarizes it before packing the bundle, using the `MACOS_CERTIFICATE`, `MACOS_CERTIFICATE_PWD`, `MACOS_SIGNING_IDENTITY`, `NOTARIZATION_APPLE_ID`, `NOTARIZATION_PASSWORD` and `NOTARIZATION_TEAM_ID` repository secrets. A bare executable cannot be stapled, so Gatekeeper verifies the notarization ticket online on first launch.
+
+The Windows binary is published unsigned and signed afterwards with a Certum code-signing certificate through SimplySign Desktop, which needs an interactive OTP login and therefore runs on the maintainer's machine. With SimplySign Desktop logged in, `gh` authenticated and `npm ci --prefix mcpb` done:
+
+```powershell
+.\mcpb\Sign-Release.ps1 -Version 0.2.0            # add -NoUpload to inspect target\signed first
+```
+
+The script downloads the Windows binary from the release, signs it (SHA-256, Certum RFC 3161 timestamp), verifies signature and timestamp, re-packs the Windows `.mcpb` around the signed binary with `mcpb/pack.mjs`, runs `mcpb/test-mcpb.mjs` against that bundle and replaces both release assets. The certificate thumbprint comes from `$env:CERTUM_SIGN_THUMBPRINT` (or `$env:DISKSPACE_SIGN_THUMBPRINT`), so renewal is a profile edit rather than a commit; always pin by thumbprint. Not signed: the `.mcpb` container itself (its signing needs a PEM private key that neither SimplySign nor the Apple keychain exposes) and the Linux binaries.
+
 ### Manual local stdio
 
 The `stdio` profile enables MCP over stdin/stdout and disables the HTTP listener, so multiple desktop clients can launch their own process without port conflicts. Logs go to stderr.
@@ -222,6 +234,14 @@ Container creation is opt-in:
 ./mvnw package -Dnative -Dquarkus.native.container-build=true -Dquarkus.container-image.build=true
 
 docker run --rm -p 8080:8080 greystone/openjdk-helper:latest
+```
+
+Pushing a `v*` tag publishes the multi-architecture JVM image as `greystone/openjdk-helper:X.Y.Z` and `:latest` through `.github/workflows/release.yml`, using the `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` repository secrets. `:latest` is no longer pushed on every commit to `main`. To publish an image by hand, for example a hotfix without a release:
+
+```sh
+./mvnw clean package -DskipTests
+docker buildx build -f src/main/docker/Dockerfile.jvm --platform linux/amd64,linux/arm64 \
+  -t greystone/openjdk-helper:X.Y.Z -t greystone/openjdk-helper:latest --push .
 ```
 
 For hirt.se, forward `/openjdk/` to the application's `/`, preserve the request method, and pass `MCP-Session-Id` and `MCP-Protocol-Version` headers. Disable response buffering and allow long-lived connections for MCP event streams. Forwarded host/prefix support is enabled; supply these headers only from the trusted reverse proxy.

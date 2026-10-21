@@ -93,6 +93,55 @@ jobs:
           mv "target/openjdk-helper-${VERSION}-runner${{ matrix.exe }}" \
              "target/openjdk-helper-${VERSION}-${{ matrix.suffix }}${{ matrix.exe }}"
 
+      # macOS: signing and notarization run on the renamed binary, so the bare asset and the bundle both carry
+      # the signature. Windows: the binary and bundle are published unsigned. Windows code signing uses a
+      # Certum certificate through SimplySign Desktop, which needs an OTP login with no clean headless path on
+      # GitHub-hosted runners, so mcpb/Sign-Release.ps1 signs the published binary on the maintainer's machine
+      # and replaces both release assets afterwards.
+      - name: Import Developer ID certificate
+        if: runner.os == 'macOS'
+        env:
+          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+          MACOS_CERTIFICATE_PWD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
+        run: |
+          set -euo pipefail
+          KEYCHAIN="$RUNNER_TEMP/signing.keychain-db"
+          KEYCHAIN_PWD="$(openssl rand -hex 24)"
+          printf '%s' "$MACOS_CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/certificate.p12"
+          security create-keychain -p "$KEYCHAIN_PWD" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PWD" "$KEYCHAIN"
+          security import "$RUNNER_TEMP/certificate.p12" -P "$MACOS_CERTIFICATE_PWD" -A -t cert -f pkcs12 -k "$KEYCHAIN"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PWD" "$KEYCHAIN" > /dev/null
+          security list-keychains -d user -s "$KEYCHAIN" login.keychain-db
+          rm -f "$RUNNER_TEMP/certificate.p12"
+          security find-identity -v -p codesigning "$KEYCHAIN"
+
+      - name: Sign and notarize native executable
+        if: runner.os == 'macOS'
+        env:
+          MACOS_SIGNING_IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
+          NOTARIZATION_APPLE_ID: ${{ secrets.NOTARIZATION_APPLE_ID }}
+          NOTARIZATION_PASSWORD: ${{ secrets.NOTARIZATION_PASSWORD }}
+          NOTARIZATION_TEAM_ID: ${{ secrets.NOTARIZATION_TEAM_ID }}
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#v}"
+          BINARY="target/openjdk-helper-${VERSION}-${{ matrix.suffix }}"
+          codesign --force --timestamp --options runtime --sign "$MACOS_SIGNING_IDENTITY" "$BINARY"
+          codesign --verify --strict --verbose=2 "$BINARY"
+          # notarytool accepts a zip of a bare Mach-O; the ticket is verified online, a bare executable cannot be stapled.
+          ditto -c -k --keepParent "$BINARY" "$RUNNER_TEMP/notarize.zip"
+          xcrun notarytool submit "$RUNNER_TEMP/notarize.zip" \
+            --apple-id "$NOTARIZATION_APPLE_ID" --password "$NOTARIZATION_PASSWORD" --team-id "$NOTARIZATION_TEAM_ID" \
+            --wait --timeout 30m
+          codesign -dvv "$BINARY" 2>&1 | grep -E 'Authority=Developer ID Application|Timestamp='
+
+      - name: Clean up keychain
+        if: runner.os == 'macOS' && always()
+        run: security delete-keychain "$RUNNER_TEMP/signing.keychain-db" || true
+
+      # The bundle smoke test launches the packed binary, so on macOS it exercises the hardened-runtime signature.
       - name: Package and test MCP bundle
         shell: bash
         run: |
