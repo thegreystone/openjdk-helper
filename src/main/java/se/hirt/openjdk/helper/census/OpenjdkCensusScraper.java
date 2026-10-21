@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Marcus Hirt
+ * Copyright (C) 2024-2026 Marcus Hirt
  *                    www.hirt.se
  *
  * This software is free:

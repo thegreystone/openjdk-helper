@@ -1,3 +1,4 @@
+/* Copyright (C) 2024-2026 Marcus Hirt. See LICENSE for license details. */
 package se.hirt.openjdk.helper.census;
 
 import io.quarkus.logging.Log;
