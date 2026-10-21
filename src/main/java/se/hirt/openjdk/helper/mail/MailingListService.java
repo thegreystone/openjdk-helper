@@ -23,7 +23,10 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/** Reads the public pipermail archives on mail.openjdk.org one month at a time; message bodies are not fetched. */
+/**
+ * Reads the public pipermail archives on mail.openjdk.org one month at a time; message bodies are
+ * not fetched.
+ */
 @ApplicationScoped
 public class MailingListService {
 	private static final Pattern MESSAGE = Pattern.compile("^(\\d+)\\.html$");
@@ -70,9 +73,11 @@ public class MailingListService {
 			availableMonths = new ArrayList<>();
 			Matcher months = ARCHIVE_MONTH.matcher(fetchedIndex.body());
 			while (months.find() && availableMonths.size() < 24) {
-				if (!availableMonths.contains(months.group(1))) availableMonths.add(months.group(1));
+				if (!availableMonths.contains(months.group(1)))
+					availableMonths.add(months.group(1));
 			}
-			if (availableMonths.isEmpty()) return malformed(index);
+			if (availableMonths.isEmpty())
+				return malformed(index);
 			archiveMonth = availableMonths.get(0);
 		}
 		URI source = ApiSupport.uri(baseUrl, "/pipermail/" + listName + "/" + archiveMonth + "/thread.html", Map.of());
@@ -82,11 +87,14 @@ public class MailingListService {
 		int minimumDepth = Integer.MAX_VALUE;
 		for (Element item : page.select("li")) {
 			Element link = item.selectFirst("> a[href]");
-			if (link == null) continue;
+			if (link == null)
+				continue;
 			Matcher id = MESSAGE.matcher(link.attr("href"));
-			if (!id.matches()) continue;
+			if (!id.matches())
+				continue;
 			String subject = normalized(link.text());
-			if (subject.isEmpty()) continue;
+			if (subject.isEmpty())
+				continue;
 			Element author = item.selectFirst("> i");
 			int depth = item.parents().stream().filter(parent -> parent.tagName().equals("ul")).toList().size();
 			minimumDepth = Math.min(minimumDepth, depth);
@@ -104,10 +112,13 @@ public class MailingListService {
 		} else if (messages.isEmpty()) {
 			return malformed(source);
 		}
-		for (var message : messages) message.put("depth", (int) message.get("depth") - minimumDepth);
-		List<Map<String, Object>> matches = messages.stream().filter(message -> text.isEmpty()
-				|| message.get("subject").toString().toLowerCase(Locale.ROOT).contains(text)
-				|| message.get("author").toString().toLowerCase(Locale.ROOT).contains(text)).toList();
+		for (var message : messages)
+			message.put("depth", (int) message.get("depth") - minimumDepth);
+		List<Map<String, Object>> matches = messages.stream()
+				.filter(message -> text.isEmpty()
+						|| message.get("subject").toString().toLowerCase(Locale.ROOT).contains(text)
+						|| message.get("author").toString().toLowerCase(Locale.ROOT).contains(text))
+				.toList();
 		var results = matches.subList(Math.min(start, matches.size()), Math.min(start + pageSize, matches.size()));
 		var result = new LinkedHashMap<String, Object>();
 		result.put("status", "available");
@@ -117,7 +128,8 @@ public class MailingListService {
 		result.put("list", listName);
 		result.put("archiveIndex", index.toString());
 		result.put("month", archiveMonth);
-		if (availableMonths != null) result.put("availableMonths", availableMonths);
+		if (availableMonths != null)
+			result.put("availableMonths", availableMonths);
 		result.put("query", text);
 		Matcher count = COUNT.matcher(fetched.body());
 		result.put("messagesInMonth", count.find() ? Integer.parseInt(count.group(1)) : messages.size());
@@ -126,7 +138,8 @@ public class MailingListService {
 		result.put("limit", pageSize);
 		result.put("total", matches.size());
 		result.put("hasMore", start + results.size() < matches.size());
-		result.put("semantics", "Subjects and authors come from one month's thread index; depth 0 starts a thread. kind is derived from conventional subject prefixes (CFV, Result, RFR, RFC, Integrated, Withdrawn) and is a hint, not a vote tally. Read the linked message for content and vote outcomes.");
+		result.put("semantics",
+				"Subjects and authors come from one month's thread index; depth 0 starts a thread. kind is derived from conventional subject prefixes (CFV, Result, RFR, RFC, Integrated, Withdrawn) and is a hint, not a vote tally. Read the linked message for content and vote outcomes.");
 		return Response.ok(result).build();
 	}
 
@@ -141,7 +154,8 @@ public class MailingListService {
 		String month = value.strip();
 		Matcher numeric = NUMERIC_MONTH.matcher(month);
 		if (numeric.matches()) {
-			return numeric.group(1) + "-" + Month.of(Integer.parseInt(numeric.group(2))).getDisplayName(TextStyle.FULL, Locale.ENGLISH);
+			return numeric.group(1) + "-"
+					+ Month.of(Integer.parseInt(numeric.group(2))).getDisplayName(TextStyle.FULL, Locale.ENGLISH);
 		}
 		Matcher named = NAMED_MONTH.matcher(month);
 		if (named.matches()) {
@@ -151,23 +165,32 @@ public class MailingListService {
 				}
 			}
 		}
-		throw new IllegalArgumentException("month must be YYYY-MM or YYYY-MonthName, for example 2026-02 or 2026-February");
+		throw new IllegalArgumentException(
+				"month must be YYYY-MM or YYYY-MonthName, for example 2026-02 or 2026-February");
 	}
 
 	static String kind(String subject) {
 		String lower = subject.toLowerCase(Locale.ROOT).replaceFirst("^(re|fwd?):\\s*", "");
-		if (lower.startsWith("cfv:")) return "vote";
-		if (lower.startsWith("result:")) return "vote-result";
-		if (lower.startsWith("rfr:")) return "review-request";
-		if (lower.startsWith("rfc:")) return "request-for-comments";
-		if (lower.startsWith("integrated:")) return "integrated";
-		if (lower.startsWith("withdrawn:")) return "withdrawn";
-		if (lower.startsWith("[rfr]") || lower.startsWith("rfr ")) return "review-request";
+		if (lower.startsWith("cfv:"))
+			return "vote";
+		if (lower.startsWith("result:"))
+			return "vote-result";
+		if (lower.startsWith("rfr:"))
+			return "review-request";
+		if (lower.startsWith("rfc:"))
+			return "request-for-comments";
+		if (lower.startsWith("integrated:"))
+			return "integrated";
+		if (lower.startsWith("withdrawn:"))
+			return "withdrawn";
+		if (lower.startsWith("[rfr]") || lower.startsWith("rfr "))
+			return "review-request";
 		return "other";
 	}
 
 	private static String filter(String value) {
-		if (value == null) return "";
+		if (value == null)
+			return "";
 		if (value.length() > 200 || value.chars().anyMatch(Character::isISOControl)) {
 			throw new IllegalArgumentException("query must have at most 200 characters and no control characters");
 		}
@@ -183,8 +206,8 @@ public class MailingListService {
 	}
 
 	private static Response malformed(URI source) {
-		return Response.status(502).entity(Map.of("status", "unavailable", "source", source.toString(),
-				"message", "The mailing list archive returned an unexpected page. Its format may have changed.")).build();
+		return Response.status(502).entity(Map.of("status", "unavailable", "source", source.toString(), "message",
+				"The mailing list archive returned an unexpected page. Its format may have changed.")).build();
 	}
 
 	private static Response invalid(String message) {

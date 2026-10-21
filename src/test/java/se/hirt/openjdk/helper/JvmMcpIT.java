@@ -54,7 +54,8 @@ class JvmMcpIT extends PackagedMcpTest {
 			throw new IllegalStateException("Cannot locate packaged application metadata", e);
 		}
 		String artifactPath = artifact.getProperty("path");
-		assertTrue(artifactPath != null && artifactPath.endsWith(".jar"), "Expected packaged JVM artifact: " + artifact);
+		assertTrue(artifactPath != null && artifactPath.endsWith(".jar"),
+				"Expected packaged JVM artifact: " + artifact);
 		Path jar = Path.of("target").resolve(artifactPath);
 		assertTrue(Files.isRegularFile(jar), "Packaged jar is missing: " + jar);
 		command.add(jar.toAbsolutePath().toString());

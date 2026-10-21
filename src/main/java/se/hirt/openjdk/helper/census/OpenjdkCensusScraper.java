@@ -90,14 +90,15 @@ public class OpenjdkCensusScraper {
 		this.censusRetriever = censusRetriever;
 		this.refreshIntervalInSeconds = refreshIntervalInSeconds;
 		refresh();
-		scheduler.scheduleWithFixedDelay(this::refresh, refreshIntervalInSeconds, refreshIntervalInSeconds, TimeUnit.SECONDS);
+		scheduler.scheduleWithFixedDelay(this::refresh, refreshIntervalInSeconds, refreshIntervalInSeconds,
+				TimeUnit.SECONDS);
 	}
 
 	/**
 	 * For testing purposes _only_.
 	 *
 	 * @param html
-	 * 		the HTML to use when testing.
+	 *            the HTML to use when testing.
 	 */
 	public OpenjdkCensusScraper(String html) {
 		censusRetriever = null;
@@ -279,8 +280,9 @@ public class OpenjdkCensusScraper {
 		return new Snapshot(Map.copyOf(groups), Map.copyOf(projects), Map.copyOf(people), getSnapshotMetadata());
 	}
 
-	public record Snapshot(Map<String, Group> groups, Map<String, Project> projects,
-			Map<String, Person> people, Map<String, Object> metadata) {}
+	public record Snapshot(Map<String, Group> groups, Map<String, Project> projects, Map<String, Person> people,
+			Map<String, Object> metadata) {
+	}
 
 	private void ensureAvailable() {
 		if (people == null) {
@@ -290,19 +292,22 @@ public class OpenjdkCensusScraper {
 
 	public Set<Person> findPeople(String regexp) {
 		Pattern pattern = Pattern.compile(regexp);
-		Predicate<Person> predicate = person -> pattern.matcher(person.getFullName()).find() || pattern.matcher(person.getUserid()).find();
+		Predicate<Person> predicate = person -> pattern.matcher(person.getFullName()).find()
+				|| pattern.matcher(person.getUserid()).find();
 		return getPeople().values().stream().filter(predicate).collect(Collectors.toSet());
 	}
 
 	public Set<Project> findProjects(String regexp) {
 		Pattern pattern = Pattern.compile(regexp);
-		Predicate<Project> predicate = project -> pattern.matcher(project.getFullName()).find() || pattern.matcher(project.getId()).find();
+		Predicate<Project> predicate = project -> pattern.matcher(project.getFullName()).find()
+				|| pattern.matcher(project.getId()).find();
 		return getProjects().values().stream().filter(predicate).collect(Collectors.toSet());
 	}
 
 	public Set<Group> findGroups(String regexp) {
 		Pattern pattern = Pattern.compile(regexp);
-		Predicate<Group> predicate = group -> pattern.matcher(group.getFullName()).find() || pattern.matcher(group.getId()).find();
+		Predicate<Group> predicate = group -> pattern.matcher(group.getFullName()).find()
+				|| pattern.matcher(group.getId()).find();
 		return getGroups().values().stream().filter(predicate).collect(Collectors.toSet());
 	}
 
@@ -360,7 +365,8 @@ public class OpenjdkCensusScraper {
 		return projects;
 	}
 
-	private static Map<String, Person> extractPeople(Document doc, Map<String, Group> groups, Map<String, Project> projects) {
+	private static Map<String, Person> extractPeople(
+		Document doc, Map<String, Group> groups, Map<String, Project> projects) {
 		Map<String, Person> people = new HashMap<>();
 
 		Element peopleSection = doc.select("tr.part#people").first();
@@ -381,7 +387,8 @@ public class OpenjdkCensusScraper {
 					if (current.hasClass("role")) {
 						String role = current.select("td").get(1).text();
 						current = current.nextElementSibling();
-						while (current != null && !current.hasClass("role") && !current.hasClass("section") && !current.hasClass("part")) {
+						while (current != null && !current.hasClass("role") && !current.hasClass("section")
+								&& !current.hasClass("part")) {
 							Element linkElement = current.select("td > a").first();
 							if (linkElement != null) {
 								String affiliationId = linkElement.attr("href").substring(1);

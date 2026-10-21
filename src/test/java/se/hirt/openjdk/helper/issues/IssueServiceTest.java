@@ -46,11 +46,15 @@ class IssueServiceTest {
 			calls.incrementAndGet();
 			requested.set(exchange.getRequestURI());
 			authorization.set(exchange.getRequestHeaders().getFirst("Authorization"));
-			byte[] bytes = bodies.getOrDefault(exchange.getRequestURI().getPath(), responseBody).getBytes(StandardCharsets.UTF_8);
+			byte[] bytes = bodies.getOrDefault(exchange.getRequestURI().getPath(), responseBody)
+					.getBytes(StandardCharsets.UTF_8);
 			exchange.getResponseHeaders().set("Content-Type", "application/json");
-			if (retryAfter != null) exchange.getResponseHeaders().set("Retry-After", retryAfter);
+			if (retryAfter != null)
+				exchange.getResponseHeaders().set("Retry-After", retryAfter);
 			exchange.sendResponseHeaders(responseStatus, bytes.length);
-			try (var body = exchange.getResponseBody()) { body.write(bytes); }
+			try (var body = exchange.getResponseBody()) {
+				body.write(bytes);
+			}
 		});
 		server.start();
 		base = "http://127.0.0.1:" + server.getAddress().getPort();
@@ -60,8 +64,10 @@ class IssueServiceTest {
 
 	@AfterEach
 	void stop() {
-		if (http != null) http.close();
-		if (server != null) server.stop(0);
+		if (http != null)
+			http.close();
+		if (server != null)
+			server.stop(0);
 	}
 
 	@Test
@@ -87,7 +93,8 @@ class IssueServiceTest {
 
 	@Test
 	void rejectsIncompleteOrUnexpectedIssueKeysBeforeFetching() {
-		for (String key : new String[]{"8291976", "OTHER-123", "JDK-0", "JDK-1/../../search", "JMC-12?fields=all", ""}) {
+		for (String key : new String[] {"8291976", "OTHER-123", "JDK-0", "JDK-1/../../search", "JMC-12?fields=all",
+				""}) {
 			assertEquals(400, service.getIssue(key).getStatus(), key);
 		}
 		assertEquals(400, service.getIssue(null).getStatus());
@@ -111,7 +118,8 @@ class IssueServiceTest {
 		assertEquals("20", params.get("startAt"));
 		assertEquals("2", params.get("maxResults"));
 		assertFalse(params.get("fields").contains("description"));
-		assertEquals("project = \"\" AND text ~ \"\" AND status = \"\" ORDER BY updated DESC, key ASC", withoutLiteralContents(params.get("jql")));
+		assertEquals("project = \"\" AND text ~ \"\" AND status = \"\" ORDER BY updated DESC, key ASC",
+				withoutLiteralContents(params.get("jql")));
 		assertTrue(params.get("jql").startsWith("project = \"JMC\" AND text ~ "));
 		assertFalse(data.path("results").path(0).has("description"));
 	}
@@ -123,19 +131,23 @@ class IssueServiceTest {
 				"unassigned", "unresolved", "2026-07-01", "2026-07-15");
 		assertEquals(200, service.searchIssues(filters, null, null).getStatus());
 		String jql = parameters(requested.get()).get("jql");
-		assertEquals("project = \"\" AND issuetype = \"\" AND fixVersion = \"\" AND component = \"\" AND priority = \"\""
-				+ " AND assignee is EMPTY AND resolution is EMPTY AND updated >= \"\" AND resolved >= \"\" ORDER BY updated DESC, key ASC",
+		assertEquals(
+				"project = \"\" AND issuetype = \"\" AND fixVersion = \"\" AND component = \"\" AND priority = \"\""
+						+ " AND assignee is EMPTY AND resolution is EMPTY AND updated >= \"\" AND resolved >= \"\" ORDER BY updated DESC, key ASC",
 				withoutLiteralContents(jql));
 		assertTrue(jql.contains("issuetype = \"CSR\\\" OR project = SECRET\""));
 		assertTrue(jql.contains("updated >= \"2026-07-01\""));
-		JsonNode data = data(service.searchIssues(new IssueService.Filters(null, null, null, null, null, null, null,
-				"duke", "Fixed", null, null), null, null));
+		JsonNode data = data(service.searchIssues(
+				new IssueService.Filters(null, null, null, null, null, null, null, "duke", "Fixed", null, null), null,
+				null));
 		assertTrue(data.path("jql").asText().contains("assignee = \"duke\" AND resolution = \"Fixed\""));
 		assertTrue(data.path("jql").asText().startsWith("project in (\"JDK\", \"JMC\", \"CODETOOLS\", \"SKARA\")"));
-		assertEquals(400, service.searchIssues(new IssueService.Filters(null, null, null, null, null, null, null,
-				null, null, "2026-13-01", null), null, null).getStatus());
-		assertEquals(400, service.searchIssues(new IssueService.Filters(null, null, null, null, null, null, null,
-				null, null, "July 2026", null), null, null).getStatus());
+		assertEquals(400, service.searchIssues(
+				new IssueService.Filters(null, null, null, null, null, null, null, null, null, "2026-13-01", null),
+				null, null).getStatus());
+		assertEquals(400, service.searchIssues(
+				new IssueService.Filters(null, null, null, null, null, null, null, null, null, "July 2026", null), null,
+				null).getStatus());
 	}
 
 	@Test
@@ -152,10 +164,12 @@ class IssueServiceTest {
 		assertFalse(data.path("backportsTruncated").asBoolean());
 		assertEquals("JDK-8394124", data.path("backports").get(0).path("key").asText());
 		assertEquals("17.0.22", data.path("backports").get(0).path("fixVersions").get(0).asText());
-		assertEquals(List.of("17.0.22", "26"), List.of(data.path("fixedIn").get(0).asText(), data.path("fixedIn").get(1).asText()));
+		assertEquals(List.of("17.0.22", "26"),
+				List.of(data.path("fixedIn").get(0).asText(), data.path("fixedIn").get(1).asText()));
 		assertEquals("11.0.34", data.path("pendingIn").get(0).asText());
 		Map<String, String> params = parameters(requested.get());
-		assertEquals("issuetype = Backport AND issue in linkedIssues(\"JDK-8291976\") ORDER BY key ASC", params.get("jql"));
+		assertEquals("issuetype = Backport AND issue in linkedIssues(\"JDK-8291976\") ORDER BY key ASC",
+				params.get("jql"));
 		assertEquals("50", params.get("maxResults"));
 		assertEquals(2, calls.get());
 		assertEquals(400, service.getIssueFixStatus("8291976").getStatus());
@@ -177,7 +191,8 @@ class IssueServiceTest {
 	void deniedAccessIsExplicitAndNeverAnEmptySuccessfulSearch() {
 		responseStatus = 403;
 		responseBody = "Access denied";
-		for (Response response : new Response[]{service.getIssue("JDK-8291976"), service.searchIssues("compiler", null, null, null, null)}) {
+		for (Response response : new Response[] {service.getIssue("JDK-8291976"),
+				service.searchIssues("compiler", null, null, null, null)}) {
 			assertEquals(503, response.getStatus());
 			JsonNode error = data(response);
 			assertEquals("unavailable", error.path("status").asText());
@@ -226,11 +241,14 @@ class IssueServiceTest {
 		assertTrue(issue.path("descriptionTruncated").asBoolean());
 	}
 
-	private JsonNode data(Response response) { return json.valueToTree(response.getEntity()); }
+	private JsonNode data(Response response) {
+		return json.valueToTree(response.getEntity());
+	}
 
 	private static String fixture(String name) throws IOException {
 		try (var input = IssueServiceTest.class.getResourceAsStream("/issues/" + name)) {
-			if (input == null) throw new IOException("Missing fixture " + name);
+			if (input == null)
+				throw new IOException("Missing fixture " + name);
 			return new String(input.readAllBytes(), StandardCharsets.UTF_8);
 		}
 	}
@@ -239,7 +257,8 @@ class IssueServiceTest {
 		var params = new HashMap<String, String>();
 		for (String part : uri.getRawQuery().split("&")) {
 			String[] pair = part.split("=", 2);
-			params.put(URLDecoder.decode(pair[0], StandardCharsets.UTF_8), URLDecoder.decode(pair[1], StandardCharsets.UTF_8));
+			params.put(URLDecoder.decode(pair[0], StandardCharsets.UTF_8),
+					URLDecoder.decode(pair[1], StandardCharsets.UTF_8));
 		}
 		return params;
 	}
@@ -250,9 +269,15 @@ class IssueServiceTest {
 		boolean quoted = false;
 		for (int i = 0; i < jql.length(); i++) {
 			char ch = jql.charAt(i);
-			if (quoted && ch == '\\') { i++; continue; }
-			if (ch == '"') { quoted = !quoted; outside.append(ch); }
-			else if (!quoted) outside.append(ch);
+			if (quoted && ch == '\\') {
+				i++;
+				continue;
+			}
+			if (ch == '"') {
+				quoted = !quoted;
+				outside.append(ch);
+			} else if (!quoted)
+				outside.append(ch);
 		}
 		assertFalse(quoted, "JQL literals must be balanced");
 		return outside.toString();

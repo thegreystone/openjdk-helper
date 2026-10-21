@@ -16,14 +16,16 @@ public class MailingListTools {
 	@Inject
 	ToolResults results;
 
-	@Tool(description = "List or search one month of an OpenJDK mailing list archive (mail.openjdk.org): subjects, authors, thread depth and message links, with vote (CFV/Result), review-request and integration subjects classified. Message bodies are not read.",
-			annotations = @Annotations(readOnlyHint = true, destructiveHint = false, idempotentHint = true))
+	@Tool(description = "List or search one month of an OpenJDK mailing list archive (mail.openjdk.org): subjects, authors, thread depth and message links, with vote (CFV/Result), review-request and integration subjects classified. Message bodies are not read.", annotations = @Annotations(readOnlyHint = true, destructiveHint = false, idempotentHint = true))
 	public ToolResponse searchMailingList(
-			@ToolArg(description = "Mailing list name, for example jmc-dev, jdk-dev or hotspot-jfr-dev") String list,
-			@ToolArg(description = "Archive month as YYYY-MM or YYYY-MonthName; defaults to the newest archived month", required = false) String month,
-			@ToolArg(description = "Case-insensitive literal text matched against subjects and authors, for example CFV or 8341234", required = false) String query,
-			@ToolArg(description = "Page size, 1 to 100; default 30", required = false) Integer limit,
-			@ToolArg(description = "Zero-based result offset; default 0", required = false) Integer offset) {
+		@ToolArg(description = "Mailing list name, for example jmc-dev, jdk-dev or hotspot-jfr-dev")
+		String list,
+		@ToolArg(description = "Archive month as YYYY-MM or YYYY-MonthName; defaults to the newest archived month", required = false)
+		String month,
+		@ToolArg(description = "Case-insensitive literal text matched against subjects and authors, for example CFV or 8341234", required = false)
+		String query, @ToolArg(description = "Page size, 1 to 100; default 30", required = false)
+		Integer limit, @ToolArg(description = "Zero-based result offset; default 0", required = false)
+		Integer offset) {
 		return results.call(() -> mail.searchThreads(list, month, query, limit, offset));
 	}
 }

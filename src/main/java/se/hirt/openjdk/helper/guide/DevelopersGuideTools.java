@@ -16,11 +16,11 @@ public class DevelopersGuideTools {
 	@Inject
 	ToolResults results;
 
-	@Tool(description = "Search the OpenJDK Developers' Guide by literal text and get verbatim, bounded section excerpts with links; omit the query for the table of contents. Complements getProjectProcesses for topics beyond the curated catalog.",
-			annotations = @Annotations(readOnlyHint = true, destructiveHint = false, idempotentHint = true))
+	@Tool(description = "Search the OpenJDK Developers' Guide by literal text and get verbatim, bounded section excerpts with links; omit the query for the table of contents. Complements getProjectProcesses for topics beyond the curated catalog.", annotations = @Annotations(readOnlyHint = true, destructiveHint = false, idempotentHint = true))
 	public ToolResponse searchDevelopersGuide(
-			@ToolArg(description = "Case-insensitive literal text, for example backport, sponsor or CSR; omit for the table of contents", required = false) String query,
-			@ToolArg(description = "Maximum sections to return, 1 to 20; default 5", required = false) Integer limit) {
+		@ToolArg(description = "Case-insensitive literal text, for example backport, sponsor or CSR; omit for the table of contents", required = false)
+		String query, @ToolArg(description = "Maximum sections to return, 1 to 20; default 5", required = false)
+		Integer limit) {
 		return results.call(() -> guide.search(query, limit));
 	}
 }

@@ -40,7 +40,9 @@ class MailingListServiceTest {
 			byte[] bytes = (path.endsWith("/") ? index : known ? page : "").getBytes(StandardCharsets.UTF_8);
 			exchange.getResponseHeaders().set("Content-Type", "text/html; charset=us-ascii");
 			exchange.sendResponseHeaders(known ? 200 : 404, known ? bytes.length : -1);
-			try (var out = exchange.getResponseBody()) { out.write(bytes); }
+			try (var out = exchange.getResponseBody()) {
+				out.write(bytes);
+			}
 		});
 		server.start();
 		http = new UpstreamHttp();
@@ -49,8 +51,10 @@ class MailingListServiceTest {
 
 	@AfterEach
 	void stop() {
-		if (http != null) http.close();
-		if (server != null) server.stop(0);
+		if (http != null)
+			http.close();
+		if (server != null)
+			server.stop(0);
 	}
 
 	@Test
@@ -80,7 +84,8 @@ class MailingListServiceTest {
 		assertFalse(data.path("hasMore").asBoolean());
 		assertEquals(6995, data.path("results").get(0).path("id").asInt());
 		assertEquals(1, data(service.searchThreads("jmc-dev", "2026-02", "alex", null, null)).path("total").asInt());
-		assertEquals(0, data(service.searchThreads("jmc-dev", "2026-02", "nothing here", null, null)).path("total").asInt());
+		assertEquals(0,
+				data(service.searchThreads("jmc-dev", "2026-02", "nothing here", null, null)).path("total").asInt());
 	}
 
 	@Test
@@ -101,7 +106,8 @@ class MailingListServiceTest {
 		assertEquals(400, service.searchThreads("jmc-dev", "2026-02", "a\nb", null, null).getStatus());
 		assertEquals(400, service.searchThreads("jmc-dev", "2026-02", null, 0, null).getStatus());
 		assertEquals(0, requests.size());
-		assertEquals(404, assertThrows(UpstreamException.class, () -> service.searchThreads("jmc-dev", "2025-01", null, null, null)).status());
+		assertEquals(404, assertThrows(UpstreamException.class,
+				() -> service.searchThreads("jmc-dev", "2025-01", null, null, null)).status());
 	}
 
 	@Test
@@ -116,7 +122,8 @@ class MailingListServiceTest {
 
 	private static String fixture(String name) throws IOException {
 		try (var input = MailingListServiceTest.class.getResourceAsStream(name)) {
-			if (input == null) throw new IOException("Missing fixture");
+			if (input == null)
+				throw new IOException("Missing fixture");
 			return new String(input.readAllBytes(), StandardCharsets.UTF_8);
 		}
 	}

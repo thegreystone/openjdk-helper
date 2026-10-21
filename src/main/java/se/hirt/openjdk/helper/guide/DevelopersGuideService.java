@@ -18,7 +18,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-/** Bounded verbatim excerpts from the OpenJDK Developers' Guide, located by heading or literal text. */
+/**
+ * Bounded verbatim excerpts from the OpenJDK Developers' Guide, located by heading or literal text.
+ */
 @ApplicationScoped
 public class DevelopersGuideService {
 	private static final int EXCERPT_LIMIT = 1500;
@@ -44,13 +46,15 @@ public class DevelopersGuideService {
 			return invalid("query must have at most 200 characters and no control characters");
 		}
 		int pageSize = limit == null ? 5 : limit;
-		if (pageSize < 1 || pageSize > 20) return invalid("limit must be between 1 and 20");
+		if (pageSize < 1 || pageSize > 20)
+			return invalid("limit must be between 1 and 20");
 		String needle = normalized(text).toLowerCase(Locale.ROOT);
 		URI source = ApiSupport.uri(baseUrl, "/guide/", Map.of());
 		var fetched = http.get(source, null);
 		Document page = Jsoup.parse(fetched.body(), source.toString());
 		List<Section> sections = sections(page, source);
-		if (sections.isEmpty()) return malformed(source);
+		if (sections.isEmpty())
+			return malformed(source);
 		var result = new LinkedHashMap<String, Object>();
 		result.put("status", "available");
 		result.put("source", source.toString());
@@ -60,12 +64,15 @@ public class DevelopersGuideService {
 		if (needle.isEmpty()) {
 			List<Map<String, Object>> contents = new ArrayList<>();
 			for (Section section : sections) {
-				if (section.level() > 2 || contents.size() >= TOC_LIMIT) continue;
-				contents.add(Map.of("id", section.id(), "title", section.title(), "level", section.level(), "url", section.url()));
+				if (section.level() > 2 || contents.size() >= TOC_LIMIT)
+					continue;
+				contents.add(Map.of("id", section.id(), "title", section.title(), "level", section.level(), "url",
+						section.url()));
 			}
 			result.put("sections", contents);
 			result.put("total", sections.size());
-			result.put("semantics", "Table of contents of the Developers' Guide down to second-level headings. Pass a query to receive verbatim excerpts.");
+			result.put("semantics",
+					"Table of contents of the Developers' Guide down to second-level headings. Pass a query to receive verbatim excerpts.");
 			return Response.ok(result).build();
 		}
 		List<Map<String, Object>> titleMatches = new ArrayList<>();
@@ -73,16 +80,20 @@ public class DevelopersGuideService {
 		for (Section section : sections) {
 			boolean inTitle = section.title().toLowerCase(Locale.ROOT).contains(needle);
 			int position = section.text().toLowerCase(Locale.ROOT).indexOf(needle);
-			if (!inTitle && position < 0) continue;
-			(inTitle ? titleMatches : bodyMatches).add(excerpt(section, inTitle ? 0 : position, inTitle ? "title" : "text"));
+			if (!inTitle && position < 0)
+				continue;
+			(inTitle ? titleMatches : bodyMatches)
+					.add(excerpt(section, inTitle ? 0 : position, inTitle ? "title" : "text"));
 		}
 		List<Map<String, Object>> matches = new ArrayList<>(titleMatches);
 		matches.addAll(bodyMatches);
 		result.put("results", matches.subList(0, Math.min(matches.size(), pageSize)));
 		result.put("total", matches.size());
 		result.put("hasMore", matches.size() > pageSize);
-		result.put("semantics", "Excerpts are verbatim text of the matching section as published at fetchedAt, bounded to " + EXCERPT_LIMIT
-				+ " characters around the first match; read the linked section for the complete text. The guide describes common practice; project-specific rules and the bylaws take precedence.");
+		result.put("semantics",
+				"Excerpts are verbatim text of the matching section as published at fetchedAt, bounded to "
+						+ EXCERPT_LIMIT
+						+ " characters around the first match; read the linked section for the complete text. The guide describes common practice; project-specific rules and the bylaws take precedence.");
 		return Response.ok(result).build();
 	}
 
@@ -110,17 +121,24 @@ public class DevelopersGuideService {
 		for (Element heading : page.select("h1[id], h2[id], h3[id]")) {
 			int level = heading.tagName().charAt(1) - '0';
 			String title = normalized(heading.text());
-			if (title.isEmpty()) continue;
+			if (title.isEmpty())
+				continue;
 			parents[level] = title;
 			List<String> breadcrumb = new ArrayList<>();
-			for (int i = 1; i < level; i++) if (parents[i] != null) breadcrumb.add(parents[i]);
+			for (int i = 1; i < level; i++)
+				if (parents[i] != null)
+					breadcrumb.add(parents[i]);
 			var text = new StringBuilder();
-			for (Element element = heading.nextElementSibling(); element != null && !element.tagName().matches("h[1-3]"); element = element.nextElementSibling()) {
+			for (Element element = heading.nextElementSibling(); element != null
+					&& !element.tagName().matches("h[1-3]"); element = element.nextElementSibling()) {
 				String value = normalized(element.text());
-				if (value.isEmpty()) continue;
-				if (!text.isEmpty()) text.append('\n');
+				if (value.isEmpty())
+					continue;
+				if (!text.isEmpty())
+					text.append('\n');
 				text.append(value);
-				if (text.length() > SECTION_LIMIT) break;
+				if (text.length() > SECTION_LIMIT)
+					break;
 			}
 			String id = heading.id();
 			sections.add(new Section(id, title, level, List.copyOf(breadcrumb), source + "#" + id,
@@ -129,15 +147,16 @@ public class DevelopersGuideService {
 		return sections;
 	}
 
-	private record Section(String id, String title, int level, List<String> breadcrumb, String url, String text) {}
+	private record Section(String id, String title, int level, List<String> breadcrumb, String url, String text) {
+	}
 
 	private static String normalized(String value) {
 		return value.replaceAll("[\\p{Z}\\s]+", " ").strip();
 	}
 
 	private static Response malformed(URI source) {
-		return Response.status(502).entity(Map.of("status", "unavailable", "source", source.toString(),
-				"message", "OpenJDK returned an unexpected Developers' Guide page. Its format may have changed.")).build();
+		return Response.status(502).entity(Map.of("status", "unavailable", "source", source.toString(), "message",
+				"OpenJDK returned an unexpected Developers' Guide page. Its format may have changed.")).build();
 	}
 
 	private static Response invalid(String message) {

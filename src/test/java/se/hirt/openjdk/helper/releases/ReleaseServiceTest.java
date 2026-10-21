@@ -36,7 +36,9 @@ class ReleaseServiceTest {
 			byte[] bytes = page.getBytes(StandardCharsets.UTF_8);
 			exchange.getResponseHeaders().set("Content-Type", "text/html; charset=utf-8");
 			exchange.sendResponseHeaders(status, bytes.length);
-			try (var out = exchange.getResponseBody()) { out.write(bytes); }
+			try (var out = exchange.getResponseBody()) {
+				out.write(bytes);
+			}
 		});
 		server.start();
 		base = "http://127.0.0.1:" + server.getAddress().getPort();
@@ -45,8 +47,10 @@ class ReleaseServiceTest {
 
 	@AfterEach
 	void stop() {
-		if (http != null) http.close();
-		if (server != null) server.stop(0);
+		if (http != null)
+			http.close();
+		if (server != null)
+			server.stop(0);
 	}
 
 	private ReleaseService service(String today) {
@@ -66,7 +70,8 @@ class ReleaseServiceTest {
 		assertEquals(5, data.path("milestones").size());
 		assertTrue(data.path("milestones").get(0).path("reached").asBoolean());
 		assertTrue(data.path("milestones").get(0).path("url").asText().endsWith("/jeps/3#rdp-1"));
-		assertEquals("Rampdown Phase One (branch from main line)", data.path("milestones").get(0).path("name").asText());
+		assertEquals("Rampdown Phase One (branch from main line)",
+				data.path("milestones").get(0).path("name").asText());
 		assertEquals(2, data.path("features").size());
 		assertEquals(517, data.path("features").get(1).path("number").asInt());
 		assertEquals("2026/3/16 21:53 UTC", data.path("pageLastUpdate").asText());
@@ -75,7 +80,8 @@ class ReleaseServiceTest {
 
 	@Test
 	void beforeAndAfterTheScheduleAreExplicit() {
-		assertEquals("Before Rampdown Phase One", data(service("2025-11-01").getReleaseSchedule(26)).path("currentPhase").asText());
+		assertEquals("Before Rampdown Phase One",
+				data(service("2025-11-01").getReleaseSchedule(26)).path("currentPhase").asText());
 		JsonNode shipped = data(service("2026-04-01").getReleaseSchedule(26));
 		assertEquals("General Availability", shipped.path("currentPhase").asText());
 		assertTrue(shipped.path("shipped").asBoolean());
@@ -86,12 +92,14 @@ class ReleaseServiceTest {
 	void rejectsInvalidReleasesAndUnexpectedPages() {
 		assertEquals(400, service("2026-01-20").getReleaseSchedule(8).getStatus());
 		assertEquals(400, service("2026-01-20").getReleaseSchedule(100).getStatus());
-		assertEquals(502, service("2026-01-20").getReleaseSchedule(27).getStatus(), "Heading for another release must not be accepted");
+		assertEquals(502, service("2026-01-20").getReleaseSchedule(27).getStatus(),
+				"Heading for another release must not be accepted");
 		page = "<html><body><h1>JDK 26</h1><p>No schedule yet</p></body></html>";
 		assertEquals(502, service("2026-01-20").getReleaseSchedule(26).getStatus());
 		status = 404;
 		// A release whose page was not cached by the calls above.
-		assertEquals(404, assertThrows(UpstreamException.class, () -> service("2026-01-20").getReleaseSchedule(25)).status());
+		assertEquals(404,
+				assertThrows(UpstreamException.class, () -> service("2026-01-20").getReleaseSchedule(25)).status());
 	}
 
 	private JsonNode data(Response response) {
@@ -100,7 +108,8 @@ class ReleaseServiceTest {
 
 	private static String fixture() throws IOException {
 		try (var input = ReleaseServiceTest.class.getResourceAsStream("/releases/jdk26.html")) {
-			if (input == null) throw new IOException("Missing fixture");
+			if (input == null)
+				throw new IOException("Missing fixture");
 			return new String(input.readAllBytes(), StandardCharsets.UTF_8);
 		}
 	}

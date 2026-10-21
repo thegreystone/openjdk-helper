@@ -7,11 +7,12 @@ import jakarta.ws.rs.ext.Provider;
 
 @Provider
 public class UpstreamExceptionMapper implements ExceptionMapper<UpstreamException> {
-    @Override
-    public Response toResponse(UpstreamException exception) {
-        Response.ResponseBuilder builder = Response.status(exception.httpStatus()).entity(exception.error());
-        Object retry = exception.error().get("retryAfter");
-        if (retry != null) builder.header("Retry-After", retry);
-        return builder.build();
-    }
+	@Override
+	public Response toResponse(UpstreamException exception) {
+		Response.ResponseBuilder builder = Response.status(exception.httpStatus()).entity(exception.error());
+		Object retry = exception.error().get("retryAfter");
+		if (retry != null)
+			builder.header("Retry-After", retry);
+		return builder.build();
+	}
 }

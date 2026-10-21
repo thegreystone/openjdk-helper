@@ -74,9 +74,9 @@ public class IssueService {
 			if (issue == null || !normalized.equals(issue.path("key").asText()) || !issue.path("fields").isObject()) {
 				return malformed(source);
 			}
-			return Response.ok(Map.of("status", "available", "source", source.toString(),
-					"fetchedAt", fetched.fetchedAt().toString(), "cached", fetched.cached(),
-					"issue", summarize(issue, true))).build();
+			return Response.ok(Map.of("status", "available", "source", source.toString(), "fetchedAt",
+					fetched.fetchedAt().toString(), "cached", fetched.cached(), "issue", summarize(issue, true)))
+					.build();
 		} catch (UpstreamException e) {
 			return unavailable(source, e);
 		} catch (JsonProcessingException e) {
@@ -101,17 +101,20 @@ public class IssueService {
 		} catch (IllegalArgumentException e) {
 			return invalid(e.getMessage());
 		}
-		URI source = ApiSupport.uri(baseUrl, "/rest/api/2/search", Map.of("jql", jql,
-				"startAt", start, "maxResults", pageSize, "fields", FIELDS.replace("description,", "")));
+		URI source = ApiSupport.uri(baseUrl, "/rest/api/2/search", Map.of("jql", jql, "startAt", start, "maxResults",
+				pageSize, "fields", FIELDS.replace("description,", "")));
 		try {
 			var fetched = http.get(source, token.orElse(null));
 			JsonNode page = json.readTree(fetched.body());
 			if (page == null || !page.path("issues").isArray() || !page.path("total").canConvertToInt()
-					|| page.path("total").asInt() < 0) return malformed(source);
+					|| page.path("total").asInt() < 0)
+				return malformed(source);
 			var results = new ArrayList<Map<String, Object>>();
 			for (JsonNode issue : page.path("issues")) {
-				if (!issue.path("key").isTextual() || !issue.path("fields").isObject()) return malformed(source);
-				if (results.size() < pageSize) results.add(summarize(issue, false));
+				if (!issue.path("key").isTextual() || !issue.path("fields").isObject())
+					return malformed(source);
+				if (results.size() < pageSize)
+					results.add(summarize(issue, false));
 			}
 			int total = page.path("total").asInt();
 			var result = new LinkedHashMap<String, Object>();
@@ -133,7 +136,10 @@ public class IssueService {
 		}
 	}
 
-	/** The main issue plus every linked Backport issue with its fix versions, in two bounded requests. */
+	/**
+	 * The main issue plus every linked Backport issue with its fix versions, in two bounded
+	 * requests.
+	 */
 	public Response getIssueFixStatus(String key) {
 		String normalized;
 		try {
@@ -141,10 +147,11 @@ public class IssueService {
 		} catch (IllegalArgumentException e) {
 			return invalid(e.getMessage());
 		}
-		URI source = ApiSupport.uri(baseUrl, "/rest/api/2/issue/" + normalized, Map.of("fields", FIELDS.replace("description,", "")));
+		URI source = ApiSupport.uri(baseUrl, "/rest/api/2/issue/" + normalized,
+				Map.of("fields", FIELDS.replace("description,", "")));
 		String jql = "issuetype = Backport AND issue in linkedIssues(" + quoted(normalized) + ") ORDER BY key ASC";
-		URI backportSource = ApiSupport.uri(baseUrl, "/rest/api/2/search", Map.of("jql", jql, "startAt", 0,
-				"maxResults", BACKPORT_LIMIT, "fields", BACKPORT_FIELDS));
+		URI backportSource = ApiSupport.uri(baseUrl, "/rest/api/2/search",
+				Map.of("jql", jql, "startAt", 0, "maxResults", BACKPORT_LIMIT, "fields", BACKPORT_FIELDS));
 		try {
 			var fetched = http.get(source, token.orElse(null));
 			JsonNode issue = json.readTree(fetched.body());
@@ -154,13 +161,15 @@ public class IssueService {
 			Map<String, Object> main = summarize(issue, false);
 			var fetchedBackports = http.get(backportSource, token.orElse(null));
 			JsonNode page = json.readTree(fetchedBackports.body());
-			if (page == null || !page.path("issues").isArray() || !page.path("total").canConvertToInt()) return malformed(backportSource);
+			if (page == null || !page.path("issues").isArray() || !page.path("total").canConvertToInt())
+				return malformed(backportSource);
 			var backports = new ArrayList<Map<String, Object>>();
 			var fixedIn = new java.util.TreeSet<String>();
 			var pendingIn = new java.util.TreeSet<String>();
 			record(main, fixedIn, pendingIn);
 			for (JsonNode backport : page.path("issues")) {
-				if (!backport.path("key").isTextual() || !backport.path("fields").isObject()) return malformed(backportSource);
+				if (!backport.path("key").isTextual() || !backport.path("fields").isObject())
+					return malformed(backportSource);
 				Map<String, Object> entry = summarize(backport, false);
 				entry.remove("relatedIssues");
 				entry.remove("components");
@@ -177,7 +186,8 @@ public class IssueService {
 			result.put("issue", main);
 			if ("Backport".equalsIgnoreCase(String.valueOf(main.get("type")))) {
 				for (var related : (List<Map<String, Object>>) main.get("relatedIssues")) {
-					if ("backport of".equalsIgnoreCase(String.valueOf(related.get("relationship")))) result.put("mainIssue", related.get("key"));
+					if ("backport of".equalsIgnoreCase(String.valueOf(related.get("relationship"))))
+						result.put("mainIssue", related.get("key"));
 				}
 				result.put("hint", "This is a Backport issue; query mainIssue to see every release.");
 			}
@@ -186,7 +196,8 @@ public class IssueService {
 			result.put("backportsTruncated", page.path("total").asInt() > backports.size());
 			result.put("fixedIn", new ArrayList<>(fixedIn));
 			result.put("pendingIn", new ArrayList<>(pendingIn));
-			result.put("semantics", "fixedIn lists fix versions of the issue and its linked Backport issues whose resolution is Fixed; pendingIn lists fix versions of unresolved ones. A Fixed resolution means the change was pushed to that release's repository, not that a build shipped. Backports are linked by JBS, so a missing link hides a release.");
+			result.put("semantics",
+					"fixedIn lists fix versions of the issue and its linked Backport issues whose resolution is Fixed; pendingIn lists fix versions of unresolved ones. A Fixed resolution means the change was pushed to that release's repository, not that a build shipped. Backports are linked by JBS, so a missing link hides a release.");
 			return Response.ok(result).build();
 		} catch (UpstreamException e) {
 			return unavailable(source, e);
@@ -201,16 +212,20 @@ public class IssueService {
 		boolean fixed = "Fixed".equalsIgnoreCase(String.valueOf(issue.get("resolution")));
 		boolean unresolved = issue.get("resolution") == null;
 		for (String version : versions) {
-			if (fixed) fixedIn.add(version);
-			else if (unresolved) pendingIn.add(version);
+			if (fixed)
+				fixedIn.add(version);
+			else if (unresolved)
+				pendingIn.add(version);
 		}
 	}
 
 	static String issueKey(String value) {
-		if (value == null) throw new IllegalArgumentException("A full JBS key is required, for example JDK-8344154");
+		if (value == null)
+			throw new IllegalArgumentException("A full JBS key is required, for example JDK-8344154");
 		String key = value.strip().toUpperCase(Locale.ROOT);
 		if (!key.matches("(?:JDK|JMC|CODETOOLS|SKARA)-[1-9][0-9]{0,8}")) {
-			throw new IllegalArgumentException("Use a full JDK, JMC, CODETOOLS or SKARA issue key, for example JMC-8639");
+			throw new IllegalArgumentException(
+					"Use a full JDK, JMC, CODETOOLS or SKARA issue key, for example JMC-8639");
 		}
 		return key;
 	}
@@ -223,7 +238,8 @@ public class IssueService {
 		String projectClause = "project in (\"JDK\", \"JMC\", \"CODETOOLS\", \"SKARA\")";
 		if (filters.project() != null && !filters.project().isBlank()) {
 			String name = filters.project().strip().toUpperCase(Locale.ROOT);
-			if (!PROJECTS.contains(name)) throw new IllegalArgumentException("project must be JDK, JMC, CODETOOLS or SKARA");
+			if (!PROJECTS.contains(name))
+				throw new IllegalArgumentException("project must be JDK, JMC, CODETOOLS or SKARA");
 			projectClause = "project = " + quoted(name);
 		}
 		var jql = new StringBuilder(projectClause);
@@ -232,7 +248,8 @@ public class IssueService {
 			// Jira has two grammars here: escape Lucene phrase syntax, then quote that value for JQL.
 			var phrase = new StringBuilder("\"");
 			for (char ch : text.toCharArray()) {
-				if ("+-!(){}[]^\"~*?:\\/&|".indexOf(ch) >= 0) phrase.append('\\');
+				if ("+-!(){}[]^\"~*?:\\/&|".indexOf(ch) >= 0)
+					phrase.append('\\');
 				phrase.append(ch);
 			}
 			phrase.append('"');
@@ -245,11 +262,13 @@ public class IssueService {
 		literal(jql, "priority", filters.priority(), "priority");
 		if (filters.assignee() != null && !filters.assignee().isBlank()) {
 			String assignee = boundedArgument(filters.assignee(), "assignee", 80);
-			jql.append(assignee.equalsIgnoreCase("unassigned") ? " AND assignee is EMPTY" : " AND assignee = " + quoted(assignee));
+			jql.append(assignee.equalsIgnoreCase("unassigned") ? " AND assignee is EMPTY"
+					: " AND assignee = " + quoted(assignee));
 		}
 		if (filters.resolution() != null && !filters.resolution().isBlank()) {
 			String resolution = boundedArgument(filters.resolution(), "resolution", 80);
-			jql.append(resolution.equalsIgnoreCase("unresolved") ? " AND resolution is EMPTY" : " AND resolution = " + quoted(resolution));
+			jql.append(resolution.equalsIgnoreCase("unresolved") ? " AND resolution is EMPTY"
+					: " AND resolution = " + quoted(resolution));
 		}
 		date(jql, "updated", filters.updatedSince(), "updatedSince");
 		date(jql, "resolved", filters.resolvedSince(), "resolvedSince");
@@ -257,13 +276,16 @@ public class IssueService {
 	}
 
 	private static void literal(StringBuilder jql, String field, String value, String name) {
-		if (value != null && !value.isBlank()) jql.append(" AND ").append(field).append(" = ").append(quoted(boundedArgument(value, name, 80)));
+		if (value != null && !value.isBlank())
+			jql.append(" AND ").append(field).append(" = ").append(quoted(boundedArgument(value, name, 80)));
 	}
 
 	private static void date(StringBuilder jql, String field, String value, String name) {
-		if (value == null || value.isBlank()) return;
+		if (value == null || value.isBlank())
+			return;
 		String date = value.strip();
-		if (!date.matches("\\d{4}-\\d{2}-\\d{2}")) throw new IllegalArgumentException(name + " must be a date formatted as YYYY-MM-DD");
+		if (!date.matches("\\d{4}-\\d{2}-\\d{2}"))
+			throw new IllegalArgumentException(name + " must be a date formatted as YYYY-MM-DD");
 		try {
 			java.time.LocalDate.parse(date);
 		} catch (java.time.format.DateTimeParseException e) {
@@ -279,7 +301,8 @@ public class IssueService {
 	private static String boundedArgument(String value, String name, int maxLength) {
 		String text = value.strip();
 		if (text.length() > maxLength || text.chars().anyMatch(Character::isISOControl)) {
-			throw new IllegalArgumentException(name + " must have at most " + maxLength + " characters and no control characters");
+			throw new IllegalArgumentException(
+					name + " must have at most " + maxLength + " characters and no control characters");
 		}
 		return text;
 	}
@@ -313,10 +336,12 @@ public class IssueService {
 		for (JsonNode link : fields.path("issuelinks")) {
 			boolean outward = link.has("outwardIssue");
 			JsonNode related = link.path(outward ? "outwardIssue" : "inwardIssue");
-			if (!related.path("key").isTextual()) continue;
+			if (!related.path("key").isTextual())
+				continue;
 			var relation = new LinkedHashMap<String, Object>();
 			relation.put("key", related.path("key").asText());
-			relation.put("url", ApiSupport.uri(baseUrl, "/browse/" + ApiSupport.segment(related.path("key").asText()), Map.of()).toString());
+			relation.put("url", ApiSupport
+					.uri(baseUrl, "/browse/" + ApiSupport.segment(related.path("key").asText()), Map.of()).toString());
 			copyText(relation, "relationship", link.path("type").path(outward ? "outward" : "inward"));
 			copyText(relation, "linkType", link.path("type").path("name"));
 			copyText(relation, "summary", related.path("fields").path("summary"));
@@ -332,13 +357,15 @@ public class IssueService {
 		var result = new ArrayList<String>();
 		for (JsonNode value : values) {
 			String name = value.isTextual() ? value.asText() : value.path("name").asText();
-			if (!name.isBlank()) result.add(name);
+			if (!name.isBlank())
+				result.add(name);
 		}
 		return result;
 	}
 
 	private static void copyText(Map<String, Object> target, String key, JsonNode value) {
-		if (value.isTextual() && !value.asText().isBlank()) target.put(key, value.asText());
+		if (value.isTextual() && !value.asText().isBlank())
+			target.put(key, value.asText());
 	}
 
 	private static Response unavailable(URI source, UpstreamException exception) {
@@ -347,9 +374,11 @@ public class IssueService {
 		String message = denied
 				? "JBS denied this request. Check access to the source URL from the server's network and the JBS access policy. "
 						+ "An approved token can be configured with openjdk.jbs.token if your JBS deployment supports it; authentication is not guaranteed to resolve a 403."
-				: status == 404 ? "JBS did not expose this issue. It may not exist or may not be visible to this client."
-				: status == 429 ? "JBS rate-limited this request. Wait before retrying and honor any supplied retry hints."
-				: "JBS is unavailable for this request. Retry later and check the source URL and upstream status.";
+				: status == 404
+						? "JBS did not expose this issue. It may not exist or may not be visible to this client."
+						: status == 429
+								? "JBS rate-limited this request. Wait before retrying and honor any supplied retry hints."
+								: "JBS is unavailable for this request. Retry later and check the source URL and upstream status.";
 		var error = new LinkedHashMap<String, Object>();
 		error.put("status", status == 404 ? "notFound" : status == 429 ? "rateLimited" : "unavailable");
 		error.put("accessDenied", denied);
@@ -358,14 +387,15 @@ public class IssueService {
 		error.put("message", message);
 		Map<String, Object> upstream = exception.error();
 		for (String hint : List.of("retryAfter", "rateLimitReset", "rateLimitRemaining")) {
-			if (upstream.containsKey(hint)) error.put(hint, upstream.get(hint));
+			if (upstream.containsKey(hint))
+				error.put(hint, upstream.get(hint));
 		}
 		return Response.status(status == 404 || status == 429 || status == 504 ? status : 503).entity(error).build();
 	}
 
 	private static Response malformed(URI source) {
-		return Response.status(502).entity(Map.of("status", "unavailable", "source", source.toString(),
-				"message", "JBS returned an unexpected response instead of issue data.")).build();
+		return Response.status(502).entity(Map.of("status", "unavailable", "source", source.toString(), "message",
+				"JBS returned an unexpected response instead of issue data.")).build();
 	}
 
 	private static Response invalid(String message) {

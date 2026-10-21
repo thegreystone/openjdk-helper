@@ -21,8 +21,10 @@ public class DevelopersGuideResource {
 	@Path("/search")
 	@Operation(summary = "Search the OpenJDK Developers' Guide for verbatim section excerpts")
 	public Response searchDevelopersGuide(
-			@QueryParam("query") @Parameter(description = "Case-insensitive literal text; omit for the table of contents", example = "backport") String query,
-			@QueryParam("limit") @Parameter(description = "Maximum sections to return, 1 to 20; defaults to 5") Integer limit) {
+		@QueryParam("query") @Parameter(description = "Case-insensitive literal text; omit for the table of contents", example = "backport")
+		String query,
+		@QueryParam("limit") @Parameter(description = "Maximum sections to return, 1 to 20; defaults to 5")
+		Integer limit) {
 		return guide.search(query, limit);
 	}
 }

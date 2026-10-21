@@ -56,7 +56,9 @@ class GitHubServiceTest {
 	private static final String OLD = "d".repeat(40);
 	private final ObjectMapper json = new ObjectMapper();
 	private final Map<String, Reply> routes = new ConcurrentHashMap<>();
-	/** Search replies keyed by a substring of the decoded query string, checked in insertion order. */
+	/**
+	 * Search replies keyed by a substring of the decoded query string, checked in insertion order.
+	 */
 	private final Map<String, Reply> searches = java.util.Collections.synchronizedMap(new java.util.LinkedHashMap<>());
 	private final List<URI> requests = new CopyOnWriteArrayList<>();
 	private final List<String> authorization = new CopyOnWriteArrayList<>();
@@ -71,26 +73,33 @@ class GitHubServiceTest {
 			requests.add(exchange.getRequestURI());
 			authorization.add(String.valueOf(exchange.getRequestHeaders().getFirst("Authorization")));
 			String path = exchange.getRequestURI().getPath();
-			String query = java.net.URLDecoder.decode(String.valueOf(exchange.getRequestURI().getRawQuery()), java.nio.charset.StandardCharsets.UTF_8);
-			Reply reply = searches.entrySet().stream().filter(e -> path.equals("/search/issues") && query.contains(e.getKey()))
-					.map(Map.Entry::getValue).findFirst()
+			String query = java.net.URLDecoder.decode(String.valueOf(exchange.getRequestURI().getRawQuery()),
+					java.nio.charset.StandardCharsets.UTF_8);
+			Reply reply = searches.entrySet().stream()
+					.filter(e -> path.equals("/search/issues") && query.contains(e.getKey())).map(Map.Entry::getValue)
+					.findFirst()
 					.orElse(routes.getOrDefault(path, new Reply(404, Map.of("message", "Not Found"), Map.of())));
 			byte[] body = json.writeValueAsBytes(reply.body());
 			exchange.getResponseHeaders().set("Content-Type", "application/json");
 			reply.headers().forEach((name, value) -> exchange.getResponseHeaders().set(name, value));
 			exchange.sendResponseHeaders(reply.status(), body.length);
-			try (var output = exchange.getResponseBody()) { output.write(body); }
+			try (var output = exchange.getResponseBody()) {
+				output.write(body);
+			}
 		});
 		server.start();
 		upstream = new UpstreamHttp();
-		github = new GitHubService(upstream, json, "http://127.0.0.1:" + server.getAddress().getPort(), Optional.of("fixture-token"));
+		github = new GitHubService(upstream, json, "http://127.0.0.1:" + server.getAddress().getPort(),
+				Optional.of("fixture-token"));
 		github.clock(java.time.Clock.fixed(java.time.Instant.parse("2026-10-21T12:00:00Z"), java.time.ZoneOffset.UTC));
 	}
 
 	@AfterEach
 	void stop() {
-		if (upstream != null) upstream.close();
-		if (server != null) server.stop(0);
+		if (upstream != null)
+			upstream.close();
+		if (server != null)
+			server.stop(0);
 	}
 
 	@Test
@@ -138,12 +147,16 @@ class GitHubServiceTest {
 
 	@Test
 	void invalidArgumentsFailBeforeAnyUpstreamRequests() {
-		assertEquals(400, assertThrows(WebApplicationException.class,
-				() -> github.getPullRequests("openjdk", "jdk", null, null, null, null, 0)).getResponse().getStatus());
+		assertEquals(400,
+				assertThrows(WebApplicationException.class,
+						() -> github.getPullRequests("openjdk", "jdk", null, null, null, null, 0)).getResponse()
+						.getStatus());
 		assertThrows(WebApplicationException.class, () -> github.listRepositories("openjdk", 101, 1));
-		assertThrows(WebApplicationException.class, () -> github.listPullRequests("openjdk", "jdk", null, null, null, "desc&state=all", 10, 1));
+		assertThrows(WebApplicationException.class,
+				() -> github.listPullRequests("openjdk", "jdk", null, null, null, "desc&state=all", 10, 1));
 		assertThrows(WebApplicationException.class, () -> github.getReviewContext("openjdk", "jdk", 0));
-		assertThrows(WebApplicationException.class, () -> github.getBackportStatus("openjdk", "jdk", ORIGINAL, "openjdk/jdk21u@../bad", 10));
+		assertThrows(WebApplicationException.class,
+				() -> github.getBackportStatus("openjdk", "jdk", ORIGINAL, "openjdk/jdk21u@../bad", 10));
 		assertTrue(requests.isEmpty());
 	}
 
@@ -151,7 +164,8 @@ class GitHubServiceTest {
 	void rateLimitedRequestsRetainResetAndRetryHints() {
 		routes.put("/users/limited/repos", new Reply(403, Map.of("message", "API rate limit exceeded"),
 				Map.of("X-RateLimit-Remaining", "0", "X-RateLimit-Reset", "1234567890", "Retry-After", "60")));
-		UpstreamException error = assertThrows(UpstreamException.class, () -> github.listRepositories("limited", 10, 1));
+		UpstreamException error = assertThrows(UpstreamException.class,
+				() -> github.listRepositories("limited", 10, 1));
 		assertEquals(429, error.status());
 		assertEquals("1234567890", error.error().get("rateLimitReset"));
 		assertEquals("60", error.error().get("retryAfter"));
@@ -174,7 +188,8 @@ class GitHubServiceTest {
 	@Test
 	void unavailableChecksDoNotHideTheReviewOrClaimReadiness() {
 		reviewFixtures();
-		routes.put("/repos/openjdk/jdk/commits/" + HEAD + "/check-runs", new Reply(403, Map.of(), Map.of("X-RateLimit-Remaining", "0")));
+		routes.put("/repos/openjdk/jdk/commits/" + HEAD + "/check-runs",
+				new Reply(403, Map.of(), Map.of("X-RateLimit-Remaining", "0")));
 		JsonNode result = tree(github.getReviewContext("openjdk", "jdk", 1));
 		assertEquals("partial", result.path("status").asText());
 		assertEquals(1, result.path("pullRequest").path("number").asInt());
@@ -209,7 +224,8 @@ class GitHubServiceTest {
 	void aMatchingIssueNumberDoesNotProveABackport() {
 		backportFixtures();
 		when("/search/commits", search(List.of(commit(BACKPORT, "8341234: Fix"))));
-		when("/search/issues", search(List.of(Map.of("number", 9, "title", "8341234: Fix", "body", "Backport fixes JDK-8341234"))));
+		when("/search/issues",
+				search(List.of(Map.of("number", 9, "title", "8341234: Fix", "body", "Backport fixes JDK-8341234"))));
 		JsonNode target = firstTarget();
 		assertEquals("not_found_in_search", target.path("status").asText());
 		assertEquals(0, target.path("evidence").size());
@@ -293,7 +309,8 @@ class GitHubServiceTest {
 		assertEquals("alice", result.path("reviews").get(0).path("openjdkId").asText());
 		assertEquals("Committer", result.path("reviews").get(1).path("skaraRole").asText());
 		assertEquals(1, result.path("skaraBlockers").size());
-		assertTrue(result.path("skaraBlockers").get(0).asText().startsWith("⚠️ Pull request body is missing required line"));
+		assertTrue(result.path("skaraBlockers").get(0).asText()
+				.startsWith("⚠️ Pull request body is missing required line"));
 		assertEquals("Careful", result.path("skaraWarnings").get(0).asText());
 		assertTrue(result.path("skaraSections").has("Error"));
 		assertTrue(result.path("assessment").asText().contains("integrated label"));
@@ -326,7 +343,8 @@ class GitHubServiceTest {
 		waiting.put("labels", List.of(Map.of("name", "rfr"), Map.of("name", "csr")));
 		waiting.put("created_at", "2026-08-01T00:00:00Z");
 		waiting.put("updated_at", "2026-09-01T00:00:00Z");
-		Map<String, Object> blocked = pr(3, "newbie", "Blocked\n<!-- Skara -->\n### Progress\n- [ ] Review\n### Error\n&nbsp;⚠️ Pull request body is missing required line\n### Reviewing\nhow");
+		Map<String, Object> blocked = pr(3, "newbie",
+				"Blocked\n<!-- Skara -->\n### Progress\n- [ ] Review\n### Error\n&nbsp;⚠️ Pull request body is missing required line\n### Reviewing\nhow");
 		blocked.put("labels", List.of());
 		blocked.put("created_at", "2026-10-19T00:00:00Z");
 		blocked.put("updated_at", "2026-10-21T00:00:00Z");
@@ -348,15 +366,18 @@ class GitHubServiceTest {
 		assertEquals(1, groups.path("csrPending").path("count").asInt());
 		assertEquals(1, groups.path("blockedByErrors").path("count").asInt());
 		assertEquals(3, groups.path("blockedByErrors").path("items").get(0).path("number").asInt());
-		assertEquals(1, groups.path("stale").path("count").asInt(), "Drafts are not stale; the waiting PR idle for 50 days is");
+		assertEquals(1, groups.path("stale").path("count").asInt(),
+				"Drafts are not stale; the waiting PR idle for 50 days is");
 		assertEquals(50, groups.path("stale").path("items").get(0).path("idleDays").asInt());
 		assertEquals(81, groups.path("stale").path("items").get(0).path("ageDays").asInt());
 		assertEquals(1, groups.path("drafts").path("count").asInt());
 		assertEquals(1, groups.path("unlabeled").path("count").asInt());
 		assertEquals(2, result.path("labelCounts").path("rfr").asInt());
 		assertTrue(requests.get(0).getQuery().contains("state=open"));
-		assertEquals(400, assertThrows(WebApplicationException.class, () -> github.getPullRequestTriage("openjdk", "jdk", 4, null)).getResponse().getStatus());
-		assertEquals(400, assertThrows(WebApplicationException.class, () -> github.getPullRequestTriage("openjdk", "jdk", null, 0)).getResponse().getStatus());
+		assertEquals(400, assertThrows(WebApplicationException.class,
+				() -> github.getPullRequestTriage("openjdk", "jdk", 4, null)).getResponse().getStatus());
+		assertEquals(400, assertThrows(WebApplicationException.class,
+				() -> github.getPullRequestTriage("openjdk", "jdk", null, 0)).getResponse().getStatus());
 	}
 
 	@Test
@@ -367,10 +388,13 @@ class GitHubServiceTest {
 		Map<String, Object> last = pr(90, "duke", "Latest");
 		last.put("closed_at", "2026-10-01T00:00:00Z");
 		last.put("labels", List.of(Map.of("name", "integrated")));
-		searches.put("order=asc", new Reply(200, Map.of("total_count", 12, "incomplete_results", false, "items", List.of(first)), Map.of()));
-		searches.put("order=desc", new Reply(200, Map.of("total_count", 12, "incomplete_results", false, "items", List.of(last)), Map.of()));
+		searches.put("order=asc", new Reply(200,
+				Map.of("total_count", 12, "incomplete_results", false, "items", List.of(first)), Map.of()));
+		searches.put("order=desc", new Reply(200,
+				Map.of("total_count", 12, "incomplete_results", false, "items", List.of(last)), Map.of()));
 		searches.put("is:open", new Reply(200, search(List.of()), Map.of()));
-		searches.put("-label:integrated", new Reply(200, Map.of("total_count", 2, "incomplete_results", false, "items", List.of()), Map.of()));
+		searches.put("-label:integrated",
+				new Reply(200, Map.of("total_count", 2, "incomplete_results", false, "items", List.of()), Map.of()));
 		JsonNode result = tree(github.getContributorRecord("openjdk", "jdk", "duke", 5));
 		assertEquals("complete", result.path("status").asText());
 		assertEquals(12, result.path("integratedPullRequests").path("total").asInt());
@@ -381,7 +405,8 @@ class GitHubServiceTest {
 		assertEquals(2, result.path("closedWithoutIntegration").asInt());
 		assertEquals(4, requests.size());
 		assertTrue(requests.stream().allMatch(uri -> uri.getQuery().contains("author:duke")));
-		assertTrue(requests.stream().noneMatch(uri -> uri.getQuery().contains("is:merged")), "Skara never merges on GitHub");
+		assertTrue(requests.stream().noneMatch(uri -> uri.getQuery().contains("is:merged")),
+				"Skara never merges on GitHub");
 		assertThrows(WebApplicationException.class, () -> github.getContributorRecord("openjdk", "jdk", "duke", 51));
 		assertThrows(WebApplicationException.class, () -> github.getContributorRecord("openjdk", "jdk", "du ke", null));
 	}
@@ -395,10 +420,14 @@ class GitHubServiceTest {
 		b.put("labels", List.of(Map.of("name", "integrated")));
 		Map<String, Object> c = pr(3, "newbie", "Three");
 		c.put("labels", List.of(Map.of("name", "integrated")));
-		searches.put("label:integrated closed:2026-07-01..2026-09-30", new Reply(200, Map.of("total_count", 3, "incomplete_results", false, "items", List.of(a, b, c)), Map.of()));
-		searches.put("created:2026-07-01..2026-09-30", new Reply(200, Map.of("total_count", 5, "incomplete_results", false, "items", List.of()), Map.of()));
-		searches.put("author:duke label:integrated closed:<2026-07-01", new Reply(200, Map.of("total_count", 4, "incomplete_results", false, "items", List.of()), Map.of()));
-		searches.put("author:newbie label:integrated closed:<2026-07-01", new Reply(200, Map.of("total_count", 0, "incomplete_results", false, "items", List.of()), Map.of()));
+		searches.put("label:integrated closed:2026-07-01..2026-09-30", new Reply(200,
+				Map.of("total_count", 3, "incomplete_results", false, "items", List.of(a, b, c)), Map.of()));
+		searches.put("created:2026-07-01..2026-09-30",
+				new Reply(200, Map.of("total_count", 5, "incomplete_results", false, "items", List.of()), Map.of()));
+		searches.put("author:duke label:integrated closed:<2026-07-01",
+				new Reply(200, Map.of("total_count", 4, "incomplete_results", false, "items", List.of()), Map.of()));
+		searches.put("author:newbie label:integrated closed:<2026-07-01",
+				new Reply(200, Map.of("total_count", 0, "incomplete_results", false, "items", List.of()), Map.of()));
 		JsonNode result = tree(github.getProjectActivity("openjdk", "jdk", "2026-07-01", "2026-09-30", null));
 		assertEquals("complete", result.path("status").asText());
 		assertEquals(3, result.path("integrated").path("total").asInt());
@@ -411,23 +440,35 @@ class GitHubServiceTest {
 		assertEquals(3, result.path("integrated").path("recent").size());
 		JsonNode partial = tree(github.getProjectActivity("openjdk", "jdk", "2026-07-01", null, null));
 		assertEquals("partial", partial.path("status").asText(), "Unmatched search windows are reported, not hidden");
-		assertEquals(400, assertThrows(WebApplicationException.class, () -> github.getProjectActivity("openjdk", "jdk", "2026-09-30", "2026-07-01", null)).getResponse().getStatus());
-		assertEquals(400, assertThrows(WebApplicationException.class, () -> github.getProjectActivity("openjdk", "jdk", "2024-01-01", "2026-07-01", null)).getResponse().getStatus());
-		assertEquals(400, assertThrows(WebApplicationException.class, () -> github.getProjectActivity("openjdk", "jdk", "July", null, null)).getResponse().getStatus());
+		assertEquals(400,
+				assertThrows(WebApplicationException.class,
+						() -> github.getProjectActivity("openjdk", "jdk", "2026-09-30", "2026-07-01", null))
+						.getResponse().getStatus());
+		assertEquals(400,
+				assertThrows(WebApplicationException.class,
+						() -> github.getProjectActivity("openjdk", "jdk", "2024-01-01", "2026-07-01", null))
+						.getResponse().getStatus());
+		assertEquals(400,
+				assertThrows(WebApplicationException.class,
+						() -> github.getProjectActivity("openjdk", "jdk", "July", null, null)).getResponse()
+						.getStatus());
 	}
 
 	private void reviewFixtures() {
-		when("/repos/openjdk/jdk/pulls/1", pr(1, "duke", "Description\n<!-- Skara -->\n### Progress\n- [ ] CSR approval\n### Issue\nJDK-8341234\n"
-				+ "### Error\n&nbsp;⚠️ Pull request body is missing required line: `- [x] I confirm`\n### Warning\n * Careful\n"
-				+ "### Reviewers\n * [Alice Reviewer](https://openjdk.org/census#alice) (@reviewer - **Reviewer**)\n"
-				+ " * [Bob Committer](https://openjdk.org/census#bob) (@other - **Committer**) 🔄 Re-review required (review applies to " + OLD + ")\n"
-				+ " * [Carol](https://openjdk.org/census#carol) (no project role)\n### Reviewing\nHow to review"));
-		when("/repos/openjdk/jdk/pulls/1/reviews", List.of(
-				Map.of("state", "APPROVED", "commit_id", HEAD, "user", Map.of("login", "reviewer")),
-				Map.of("state", "CHANGES_REQUESTED", "commit_id", OLD, "user", Map.of("login", "other"))));
+		when("/repos/openjdk/jdk/pulls/1",
+				pr(1, "duke", "Description\n<!-- Skara -->\n### Progress\n- [ ] CSR approval\n### Issue\nJDK-8341234\n"
+						+ "### Error\n&nbsp;⚠️ Pull request body is missing required line: `- [x] I confirm`\n### Warning\n * Careful\n"
+						+ "### Reviewers\n * [Alice Reviewer](https://openjdk.org/census#alice) (@reviewer - **Reviewer**)\n"
+						+ " * [Bob Committer](https://openjdk.org/census#bob) (@other - **Committer**) 🔄 Re-review required (review applies to "
+						+ OLD + ")\n"
+						+ " * [Carol](https://openjdk.org/census#carol) (no project role)\n### Reviewing\nHow to review"));
+		when("/repos/openjdk/jdk/pulls/1/reviews",
+				List.of(Map.of("state", "APPROVED", "commit_id", HEAD, "user", Map.of("login", "reviewer")),
+						Map.of("state", "CHANGES_REQUESTED", "commit_id", OLD, "user", Map.of("login", "other"))));
 		when("/repos/openjdk/jdk/commits/" + HEAD + "/check-runs", Map.of("total_count", 1, "check_runs",
 				List.of(Map.of("name", "jcheck", "status", "completed", "conclusion", "success", "head_sha", HEAD))));
-		when("/repos/openjdk/jdk/commits/" + HEAD + "/status", Map.of("sha", HEAD, "state", "success", "total_count", 0, "statuses", List.of()));
+		when("/repos/openjdk/jdk/commits/" + HEAD + "/status",
+				Map.of("sha", HEAD, "state", "success", "total_count", 0, "statuses", List.of()));
 	}
 
 	private void backportFixtures() {
@@ -442,17 +483,33 @@ class GitHubServiceTest {
 		return tree(github.getBackportStatus("openjdk", "jdk", ORIGINAL, "openjdk/jdk21u", 10)).path("targets").get(0);
 	}
 
-	private void when(String path, Object body) { routes.put(path, new Reply(200, body, Map.of())); }
-	private JsonNode tree(Object value) { return json.valueToTree(value); }
-	private static Map<String, Object> repo(String name) { return Map.of("name", name, "stargazers_count", 5); }
-	private static Map<String, Object> search(List<?> items) { return Map.of("total_count", items.size(), "incomplete_results", false, "items", items); }
+	private void when(String path, Object body) {
+		routes.put(path, new Reply(200, body, Map.of()));
+	}
+
+	private JsonNode tree(Object value) {
+		return json.valueToTree(value);
+	}
+
+	private static Map<String, Object> repo(String name) {
+		return Map.of("name", name, "stargazers_count", 5);
+	}
+
+	private static Map<String, Object> search(List<?> items) {
+		return Map.of("total_count", items.size(), "incomplete_results", false, "items", items);
+	}
+
 	private static Map<String, Object> commit(String sha, String message) {
-		return Map.of("sha", sha, "html_url", "https://github.com/openjdk/jdk/commit/" + sha, "commit", Map.of("message", message));
+		return Map.of("sha", sha, "html_url", "https://github.com/openjdk/jdk/commit/" + sha, "commit",
+				Map.of("message", message));
 	}
+
 	private static Map<String, Object> pr(int number, String user, String body) {
-		return new java.util.LinkedHashMap<>(Map.of("number", number, "title", "8341234: Fix", "body", body,
-				"state", "open", "head", Map.of("sha", HEAD, "ref", "fix"), "base", Map.of("sha", OLD, "ref", "master"),
-				"user", Map.of("login", user), "html_url", "https://github.com/openjdk/jdk/pull/" + number));
+		return new java.util.LinkedHashMap<>(Map.of("number", number, "title", "8341234: Fix", "body", body, "state",
+				"open", "head", Map.of("sha", HEAD, "ref", "fix"), "base", Map.of("sha", OLD, "ref", "master"), "user",
+				Map.of("login", user), "html_url", "https://github.com/openjdk/jdk/pull/" + number));
 	}
-	private record Reply(int status, Object body, Map<String, String> headers) { }
+
+	private record Reply(int status, Object body, Map<String, String> headers) {
+	}
 }

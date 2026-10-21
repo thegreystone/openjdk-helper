@@ -34,7 +34,9 @@ class DevelopersGuideServiceTest {
 			byte[] bytes = page.getBytes(StandardCharsets.UTF_8);
 			exchange.getResponseHeaders().set("Content-Type", "text/html; charset=utf-8");
 			exchange.sendResponseHeaders(200, bytes.length);
-			try (var out = exchange.getResponseBody()) { out.write(bytes); }
+			try (var out = exchange.getResponseBody()) {
+				out.write(bytes);
+			}
 		});
 		server.start();
 		http = new UpstreamHttp();
@@ -43,8 +45,10 @@ class DevelopersGuideServiceTest {
 
 	@AfterEach
 	void stop() {
-		if (http != null) http.close();
-		if (server != null) server.stop(0);
+		if (http != null)
+			http.close();
+		if (server != null)
+			server.stop(0);
 	}
 
 	@Test
@@ -58,7 +62,8 @@ class DevelopersGuideServiceTest {
 		assertEquals(2, section.path("level").asInt());
 		assertEquals("Working With Pull Requests", section.path("breadcrumb").get(0).asText());
 		assertTrue(section.path("url").asText().endsWith("/guide/#backporting"));
-		assertTrue(section.path("excerpt").asText().startsWith("Backporting a fix means applying it to an older release."));
+		assertTrue(section.path("excerpt").asText()
+				.startsWith("Backporting a fix means applying it to an older release."));
 		assertFalse(section.path("truncated").asBoolean());
 
 		JsonNode body = data(service.search("eight significant", 1));
@@ -70,7 +75,8 @@ class DevelopersGuideServiceTest {
 	@Test
 	void emptyQueryListsTheTableOfContentsAndTheDocumentIsCached() {
 		JsonNode toc = data(service.search(null, null));
-		assertEquals(5, toc.path("sections").size(), "Only first and second level headings with ids in the table of contents");
+		assertEquals(5, toc.path("sections").size(),
+				"Only first and second level headings with ids in the table of contents");
 		assertEquals(6, toc.path("total").asInt());
 		assertEquals("introduction", toc.path("sections").get(0).path("id").asText());
 		data(service.search("pull request", 20));
@@ -92,7 +98,8 @@ class DevelopersGuideServiceTest {
 
 	private static String fixture() throws IOException {
 		try (var input = DevelopersGuideServiceTest.class.getResourceAsStream("/guide/index.html")) {
-			if (input == null) throw new IOException("Missing fixture");
+			if (input == null)
+				throw new IOException("Missing fixture");
 			return new String(input.readAllBytes(), StandardCharsets.UTF_8);
 		}
 	}

@@ -36,10 +36,9 @@ import se.hirt.openjdk.helper.census.CensusService;
 import se.hirt.openjdk.helper.github.GitHubService;
 
 /**
- * Core service that combines all functionality of the OpenJDK Helper. This is the central service that can be used by all interfaces:
- * - REST/OpenAPI endpoints
- * - HTTP MCP endpoints
- * - Stdio MCP implementation
+ * Core service that combines all functionality of the OpenJDK Helper. This is the central service
+ * that can be used by all interfaces: - REST/OpenAPI endpoints - HTTP MCP endpoints - Stdio MCP
+ * implementation
  */
 @ApplicationScoped
 public class OpenJDKHelperService {

@@ -27,7 +27,8 @@ public class CensusRetriever {
 	}
 
 	@Inject
-	public CensusRetriever(@ConfigProperty(name = "openjdk.census.url", defaultValue = CENSUS_URL) String censusUrl) {
+	public CensusRetriever(@ConfigProperty(name = "openjdk.census.url", defaultValue = CENSUS_URL)
+	String censusUrl) {
 		this.censusUri = URI.create(censusUrl);
 		this.httpClient = HttpClient.newBuilder().connectTimeout(TIMEOUT).build();
 	}

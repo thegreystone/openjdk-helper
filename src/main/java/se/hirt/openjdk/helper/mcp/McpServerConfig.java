@@ -48,7 +48,8 @@ public class McpServerConfig {
 	@ConfigProperty(name = "quarkus.http.host-enabled", defaultValue = "true")
 	boolean httpEnabled;
 
-	void onStart(@Observes StartupEvent event) {
+	void onStart(@Observes
+	StartupEvent event) {
 		if (httpEnabled) {
 			LOG.infof("MCP Streamable HTTP: %s; legacy SSE: %s/sse", rootPath, rootPath);
 		}

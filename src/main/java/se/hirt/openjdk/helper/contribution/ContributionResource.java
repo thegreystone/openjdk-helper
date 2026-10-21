@@ -17,15 +17,21 @@ public class ContributionResource {
 
 	@GET
 	@Path("/context")
-	public Map<String, Object> context(@QueryParam("owner") String owner, @QueryParam("repo") String repo,
-			@QueryParam("ref") String ref) {
+	public Map<String, Object> context(@QueryParam("owner")
+	String owner, @QueryParam("repo")
+	String repo, @QueryParam("ref")
+	String ref) {
 		return service.getContributionContext(owner, repo, ref);
 	}
 
 	@GET
 	@Path("/build-guidance")
-	public Map<String, Object> buildGuidance(@QueryParam("owner") String owner, @QueryParam("repo") String repo,
-			@QueryParam("ref") String ref, @QueryParam("topic") String topic, @QueryParam("test") String test) {
+	public Map<String, Object> buildGuidance(@QueryParam("owner")
+	String owner, @QueryParam("repo")
+	String repo, @QueryParam("ref")
+	String ref, @QueryParam("topic")
+	String topic, @QueryParam("test")
+	String test) {
 		return service.getBuildGuidance(owner, repo, ref, topic, test);
 	}
 }

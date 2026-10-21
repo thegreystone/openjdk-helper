@@ -63,10 +63,11 @@ abstract class PackagedMcpTest {
 			}
 			URI base = URI.create("http://127.0.0.1:" + port);
 			Path log = temporaryDirectory.resolve("server.log");
-			var properties = new ArrayList<>(settings.entrySet().stream().map(e -> "-D" + e.getKey() + "=" + e.getValue()).toList());
+			var properties = new ArrayList<>(
+					settings.entrySet().stream().map(e -> "-D" + e.getKey() + "=" + e.getValue()).toList());
 			properties.addAll(List.of("-Dquarkus.http.port=" + port, "-Dquarkus.http.host=127.0.0.1"));
-			Process process = new ProcessBuilder(command(properties))
-					.redirectErrorStream(true).redirectOutput(log.toFile()).start();
+			Process process = new ProcessBuilder(command(properties)).redirectErrorStream(true)
+					.redirectOutput(log.toFile()).start();
 			try {
 				awaitHttp(process, http, base.resolve("/version"), log);
 				HttpResponse<String> version = get(http, base.resolve("/version"));
@@ -95,7 +96,8 @@ abstract class PackagedMcpTest {
 				assertTrue(swagger.body().contains("SwaggerUIBundle"), swagger.body());
 				HttpResponse<String> people = get(http, base.resolve("/census/people?userid=hirt"));
 				assertEquals(200, people.statusCode(), people.body());
-				assertEquals("hirt", McpTestClient.JSON.readTree(people.body()).path("results").get(0).path("userId").asText());
+				assertEquals("hirt",
+						McpTestClient.JSON.readTree(people.body()).path("results").get(0).path("userId").asText());
 				try (var client = new McpHttpClient(base.resolve("/mcp"))) {
 					McpProtocolAssertions.verify(client);
 				}
@@ -113,7 +115,8 @@ abstract class PackagedMcpTest {
 	void stdioUsesCleanJsonRpcAndDoesNotBindAnHttpPort() throws Exception {
 		try (var fixture = new CensusTestResource();
 				var occupiedPort = new ServerSocket(0, 1, InetAddress.getLoopbackAddress())) {
-			var properties = new ArrayList<>(fixture.start().entrySet().stream().map(e -> "-D" + e.getKey() + "=" + e.getValue()).toList());
+			var properties = new ArrayList<>(
+					fixture.start().entrySet().stream().map(e -> "-D" + e.getKey() + "=" + e.getValue()).toList());
 			properties.addAll(List.of("-Dquarkus.profile=stdio", "-Dquarkus.http.port=" + occupiedPort.getLocalPort(),
 					"-Dquarkus.http.host=127.0.0.1"));
 			ProcessBuilder builder = new ProcessBuilder(command(properties));

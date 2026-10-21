@@ -57,7 +57,8 @@ final class McpHttpClient implements McpTestClient {
 		message.set("params", params == null ? JSON.createObjectNode() : params);
 		HttpResponse<String> response = post(message);
 		assertEquals(200, response.statusCode(), response.body());
-		assertTrue(response.headers().firstValue("content-type").orElse("").startsWith("application/json"), response.body());
+		assertTrue(response.headers().firstValue("content-type").orElse("").startsWith("application/json"),
+				response.body());
 		JsonNode body = JSON.readTree(response.body());
 		assertEquals("2.0", body.path("jsonrpc").asText());
 		assertEquals(id, body.path("id").asInt(-1));
@@ -76,7 +77,8 @@ final class McpHttpClient implements McpTestClient {
 	}
 
 	private HttpResponse<String> post(ObjectNode message) throws Exception {
-		return client.send(headers().POST(HttpRequest.BodyPublishers.ofString(JSON.writeValueAsString(message))).build(),
+		return client.send(
+				headers().POST(HttpRequest.BodyPublishers.ofString(JSON.writeValueAsString(message))).build(),
 				HttpResponse.BodyHandlers.ofString());
 	}
 
@@ -93,7 +95,8 @@ final class McpHttpClient implements McpTestClient {
 	public void close() throws Exception {
 		try {
 			if (sessionId != null) {
-				HttpResponse<String> response = client.send(headers().DELETE().build(), HttpResponse.BodyHandlers.ofString());
+				HttpResponse<String> response = client.send(headers().DELETE().build(),
+						HttpResponse.BodyHandlers.ofString());
 				assertEquals(200, response.statusCode(), response.body());
 			}
 		} finally {

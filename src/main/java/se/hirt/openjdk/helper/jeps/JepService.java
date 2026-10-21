@@ -26,11 +26,11 @@ public class JepService {
 
 	private static final int SUMMARY_LIMIT = 4000;
 	private static final Pattern TITLE = Pattern.compile("^JEP\\s+(\\d+|draft):\\s*(.+)$", Pattern.CASE_INSENSITIVE);
-	private static final Map<String, String> FIELDS = Map.ofEntries(
-			Map.entry("Owner", "owner"), Map.entry("Type", "type"), Map.entry("Scope", "scope"),
-			Map.entry("Status", "status"), Map.entry("Release", "release"), Map.entry("Component", "component"),
-			Map.entry("Discussion", "discussion"), Map.entry("Effort", "effort"), Map.entry("Duration", "duration"),
-			Map.entry("Created", "created"), Map.entry("Updated", "updated"));
+	private static final Map<String, String> FIELDS = Map.ofEntries(Map.entry("Owner", "owner"),
+			Map.entry("Type", "type"), Map.entry("Scope", "scope"), Map.entry("Status", "status"),
+			Map.entry("Release", "release"), Map.entry("Component", "component"), Map.entry("Discussion", "discussion"),
+			Map.entry("Effort", "effort"), Map.entry("Duration", "duration"), Map.entry("Created", "created"),
+			Map.entry("Updated", "updated"));
 
 	@Inject
 	UpstreamHttp http;
@@ -46,29 +46,34 @@ public class JepService {
 	}
 
 	public Response getJep(int number) {
-		if (number < 0 || number > 9_999_999) return invalid("JEP number must be between 0 and 9999999");
+		if (number < 0 || number > 9_999_999)
+			return invalid("JEP number must be between 0 and 9999999");
 		URI source = source(number);
 		var fetched = http.get(source, null);
 		Document page = Jsoup.parse(fetched.body(), source.toString());
 		Element heading = page.selectFirst("h1");
 		var title = TITLE.matcher(heading == null ? "" : normalized(heading.text()));
-		if (!title.matches() || (!title.group(1).equalsIgnoreCase("draft")
-				&& !Integer.toString(number).equals(title.group(1))) || page.select("table.head tr").isEmpty()) {
+		if (!title.matches()
+				|| (!title.group(1).equalsIgnoreCase("draft") && !Integer.toString(number).equals(title.group(1)))
+				|| page.select("table.head tr").isEmpty()) {
 			return malformed(source);
 		}
 		var jep = new LinkedHashMap<String, Object>();
 		jep.put("number", number);
 		jep.put("title", title.group(2));
 		jep.put("url", source.toString());
-		if (title.group(1).equalsIgnoreCase("draft")) jep.put("draft", true);
+		if (title.group(1).equalsIgnoreCase("draft"))
+			jep.put("draft", true);
 		var links = new ArrayList<Map<String, String>>();
 		for (Element row : page.select("table.head tr")) {
 			var cells = row.select("td");
-			if (cells.size() < 2) continue;
+			if (cells.size() < 2)
+				continue;
 			String label = normalized(cells.get(0).text());
 			String value = normalized(cells.get(1).text());
 			String field = FIELDS.get(label);
-			if (field != null && !value.isBlank()) jep.put(field, bounded(value, 2000));
+			if (field != null && !value.isBlank())
+				jep.put(field, bounded(value, 2000));
 			for (Element link : cells.get(1).select("a[href]")) {
 				String url = link.absUrl("href");
 				if (links.size() < 50 && (url.startsWith("https://") || url.startsWith("http://"))) {
@@ -76,7 +81,8 @@ public class JepService {
 				}
 			}
 		}
-		if (!jep.containsKey("status") || !jep.containsKey("type")) return malformed(source);
+		if (!jep.containsKey("status") || !jep.containsKey("type"))
+			return malformed(source);
 		Element summaryHeading = page.getElementById("Summary");
 		if (summaryHeading != null) {
 			var summary = new StringBuilder();
@@ -84,10 +90,12 @@ public class JepService {
 					&& !element.tagName().matches("h[12]"); element = element.nextElementSibling()) {
 				String value = normalized(element.text());
 				if (!value.isBlank()) {
-					if (!summary.isEmpty()) summary.append('\n');
+					if (!summary.isEmpty())
+						summary.append('\n');
 					summary.append(value);
 				}
-				if (summary.length() > SUMMARY_LIMIT) break;
+				if (summary.length() > SUMMARY_LIMIT)
+					break;
 			}
 			if (!summary.isEmpty()) {
 				jep.put("summary", bounded(summary.toString(), SUMMARY_LIMIT));
@@ -95,8 +103,8 @@ public class JepService {
 			}
 		}
 		jep.put("links", links);
-		return Response.ok(Map.of("status", "available", "source", source.toString(),
-				"fetchedAt", fetched.fetchedAt().toString(), "cached", fetched.cached(), "jep", jep)).build();
+		return Response.ok(Map.of("status", "available", "source", source.toString(), "fetchedAt",
+				fetched.fetchedAt().toString(), "cached", fetched.cached(), "jep", jep)).build();
 	}
 
 	public Response searchJeps(String query, String status, String release, Integer limit, Integer offset) {
@@ -123,28 +131,34 @@ public class JepService {
 		for (Element row : index.select("table.jeps tr")) {
 			Element numberCell = row.selectFirst("td.jep");
 			Element link = row.selectFirst("td:last-child a[href]");
-			if (numberCell == null || link == null || !numberCell.text().matches("[0-9]{1,7}")) continue;
+			if (numberCell == null || link == null || !numberCell.text().matches("[0-9]{1,7}"))
+				continue;
 			int number = Integer.parseInt(numberCell.text());
 			String title = normalized(link.text());
 			String entryStatus = attribute(row, "Status");
-			if (title.isBlank() || entryStatus.isBlank()) continue;
+			if (title.isBlank() || entryStatus.isBlank())
+				continue;
 			var jep = new LinkedHashMap<String, Object>();
 			jep.put("number", number);
 			jep.put("title", title);
 			jep.put("status", entryStatus);
 			jep.put("url", source(number).toString());
 			String type = attribute(row, "Type");
-			if (!type.isBlank()) jep.put("type", type);
+			if (!type.isBlank())
+				jep.put("type", type);
 			String entryRelease = attribute(row, "Release");
-			if (!entryRelease.isBlank()) jep.put("release", entryRelease);
+			if (!entryRelease.isBlank())
+				jep.put("release", entryRelease);
 			entries.putIfAbsent(number, jep);
 		}
-		if (entries.isEmpty()) return malformed(source);
-		List<Map<String, Object>> matches = entries.values().stream().filter(jep ->
-				(text.isEmpty() || jep.get("title").toString().toLowerCase(Locale.ROOT).contains(text)
+		if (entries.isEmpty())
+			return malformed(source);
+		List<Map<String, Object>> matches = entries.values().stream()
+				.filter(jep -> (text.isEmpty() || jep.get("title").toString().toLowerCase(Locale.ROOT).contains(text)
 						|| jep.get("number").toString().equals(text))
-				&& (state.isEmpty() || matchesStatus(jep.get("status").toString(), state))
-				&& (targetRelease.isEmpty() || jep.getOrDefault("release", "").toString().equalsIgnoreCase(targetRelease)))
+						&& (state.isEmpty() || matchesStatus(jep.get("status").toString(), state))
+						&& (targetRelease.isEmpty()
+								|| jep.getOrDefault("release", "").toString().equalsIgnoreCase(targetRelease)))
 				.toList();
 		var results = matches.subList(Math.min(start, matches.size()), Math.min(start + pageSize, matches.size()));
 		var result = new LinkedHashMap<String, Object>();
@@ -170,15 +184,20 @@ public class JepService {
 	}
 
 	private static boolean matchesStatus(String actual, String expected) {
-		if (actual.equalsIgnoreCase(expected)) return true;
-		for (String component : actual.split("/")) if (component.strip().equalsIgnoreCase(expected)) return true;
+		if (actual.equalsIgnoreCase(expected))
+			return true;
+		for (String component : actual.split("/"))
+			if (component.strip().equalsIgnoreCase(expected))
+				return true;
 		return false;
 	}
 
 	private static String filter(String value, String name, int maxLength) {
-		if (value == null) return "";
+		if (value == null)
+			return "";
 		if (value.length() > maxLength || value.chars().anyMatch(Character::isISOControl)) {
-			throw new IllegalArgumentException(name + " must have at most " + maxLength + " characters and no control characters");
+			throw new IllegalArgumentException(
+					name + " must have at most " + maxLength + " characters and no control characters");
 		}
 		return normalized(value).toLowerCase(Locale.ROOT);
 	}
@@ -192,8 +211,8 @@ public class JepService {
 	}
 
 	private static Response malformed(URI source) {
-		return Response.status(502).entity(Map.of("status", "unavailable", "source", source.toString(),
-				"message", "OpenJDK returned an unexpected JEP page. Its format may have changed.")).build();
+		return Response.status(502).entity(Map.of("status", "unavailable", "source", source.toString(), "message",
+				"OpenJDK returned an unexpected JEP page. Its format may have changed.")).build();
 	}
 
 	private static Response invalid(String message) {

@@ -41,7 +41,9 @@ class JepServiceTest {
 			byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
 			exchange.getResponseHeaders().set("Content-Type", "text/html; charset=utf-8");
 			exchange.sendResponseHeaders(responseStatus, bytes.length);
-			try (var out = exchange.getResponseBody()) { out.write(bytes); }
+			try (var out = exchange.getResponseBody()) {
+				out.write(bytes);
+			}
 		});
 		server.start();
 		base = "http://127.0.0.1:" + server.getAddress().getPort();
@@ -51,8 +53,10 @@ class JepServiceTest {
 
 	@AfterEach
 	void stop() {
-		if (http != null) http.close();
-		if (server != null) server.stop(0);
+		if (http != null)
+			http.close();
+		if (server != null)
+			server.stop(0);
 	}
 
 	@Test
@@ -84,7 +88,8 @@ class JepServiceTest {
 		assertEquals(1, page.path("total").asInt());
 		assertEquals(517, page.path("results").path(0).path("number").asInt());
 		assertFalse(page.path("hasMore").asBoolean());
-		assertEquals(321, data(service.searchJeps("321", null, null, null, null)).path("results").path(0).path("number").asInt());
+		assertEquals(321,
+				data(service.searchJeps("321", null, null, null, null)).path("results").path(0).path("number").asInt());
 	}
 
 	@Test
@@ -150,11 +155,14 @@ class JepServiceTest {
 		assertEquals(503, error.status());
 	}
 
-	private JsonNode data(Response response) { return json.valueToTree(response.getEntity()); }
+	private JsonNode data(Response response) {
+		return json.valueToTree(response.getEntity());
+	}
 
 	private static String fixture(String name) throws IOException {
 		try (var input = JepServiceTest.class.getResourceAsStream("/jeps/" + name)) {
-			if (input == null) throw new IOException("Missing fixture " + name);
+			if (input == null)
+				throw new IOException("Missing fixture " + name);
 			return new String(input.readAllBytes(), StandardCharsets.UTF_8);
 		}
 	}

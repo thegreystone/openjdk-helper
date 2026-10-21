@@ -68,8 +68,9 @@ public class CensusService {
 					return Response.status(Response.Status.NOT_FOUND)
 							.entity(Map.of("error", "Could not find person with userid " + userIdParam)).build();
 				} else {
-					return Response.status(Response.Status.NOT_FOUND)
-							.entity(Map.of("error", "Could not find any people with the provided userids: " + userIdParam)).build();
+					return Response.status(Response.Status.NOT_FOUND).entity(
+							Map.of("error", "Could not find any people with the provided userids: " + userIdParam))
+							.build();
 				}
 			}
 		}
@@ -85,7 +86,8 @@ public class CensusService {
 
 	public Response searchPeople(String query) {
 		if (query == null || query.trim().isEmpty()) {
-			return Response.status(Response.Status.BAD_REQUEST).entity(Map.of("error", "Query parameter is required")).build();
+			return Response.status(Response.Status.BAD_REQUEST).entity(Map.of("error", "Query parameter is required"))
+					.build();
 		}
 
 		Set<Person> people;
@@ -124,7 +126,8 @@ public class CensusService {
 
 	public Response searchProjects(String query) {
 		if (query == null || query.trim().isEmpty()) {
-			return Response.status(Response.Status.BAD_REQUEST).entity(Map.of("error", "Query parameter is required")).build();
+			return Response.status(Response.Status.BAD_REQUEST).entity(Map.of("error", "Query parameter is required"))
+					.build();
 		}
 
 		Set<Project> projects;
@@ -163,7 +166,8 @@ public class CensusService {
 
 	public Response searchGroups(String query) {
 		if (query == null || query.trim().isEmpty()) {
-			return Response.status(Response.Status.BAD_REQUEST).entity(Map.of("error", "Query parameter is required")).build();
+			return Response.status(Response.Status.BAD_REQUEST).entity(Map.of("error", "Query parameter is required"))
+					.build();
 		}
 
 		Set<Group> groups;
@@ -192,7 +196,8 @@ public class CensusService {
 			for (String role : roles.split(",", -1)) {
 				String normalized = role.strip().toLowerCase(Locale.ROOT);
 				if (!Set.of("lead", "reviewer", "committer", "author", "member").contains(normalized)) {
-					throw ApiSupport.badRequest("roles must contain comma-separated exact census roles: lead, reviewer, committer, author, member");
+					throw ApiSupport.badRequest(
+							"roles must contain comma-separated exact census roles: lead, reviewer, committer, author, member");
 				}
 				requestedRoles.add(normalized);
 			}
@@ -200,15 +205,16 @@ public class CensusService {
 		OpenjdkCensusScraper.Snapshot snapshot = census.getSnapshot();
 		Project project = snapshot.projects().get(id);
 		if (project == null) {
-			return Response.status(Response.Status.NOT_FOUND).entity(Map.of("error", "Could not find project with projectid " + id)).build();
+			return Response.status(Response.Status.NOT_FOUND)
+					.entity(Map.of("error", "Could not find project with projectid " + id)).build();
 		}
 		Map<String, Person> people = snapshot.people();
 		List<Map<String, Object>> members = project.getMembers().entrySet().stream()
-				.filter(entry -> requestedRoles.isEmpty() || requestedRoles.contains(entry.getValue().toLowerCase(Locale.ROOT)))
+				.filter(entry -> requestedRoles.isEmpty()
+						|| requestedRoles.contains(entry.getValue().toLowerCase(Locale.ROOT)))
 				.filter(entry -> search.isEmpty() || entry.getKey().toLowerCase(Locale.ROOT).contains(search)
 						|| people.get(entry.getKey()).getFullName().toLowerCase(Locale.ROOT).contains(search))
-				.sorted(Map.Entry.comparingByKey())
-				.map(entry -> {
+				.sorted(Map.Entry.comparingByKey()).map(entry -> {
 					Person person = people.get(entry.getKey());
 					Map<String, Object> member = new LinkedHashMap<>();
 					member.put("userId", person.getUserid());
@@ -229,7 +235,8 @@ public class CensusService {
 		result.put("total", members.size());
 		result.put("results", members.stream().skip(start).limit(pageSize).toList());
 		result.put("hasMore", (long) start + pageSize < members.size());
-		result.put("roleSemantics", "Exact census roles; membership does not establish subject expertise or availability to review.");
+		result.put("roleSemantics",
+				"Exact census roles; membership does not establish subject expertise or availability to review.");
 		return Response.ok(result).build();
 	}
 

@@ -128,7 +128,8 @@ public class CensusScraperTest {
 
 	@Test
 	public void testInvalidCensusIsNotAcceptedAsEmptyData() {
-		assertThrows(IllegalArgumentException.class, () -> new OpenjdkCensusScraper("<html>Upstream unavailable</html>"));
+		assertThrows(IllegalArgumentException.class,
+				() -> new OpenjdkCensusScraper("<html>Upstream unavailable</html>"));
 	}
 
 	@Test

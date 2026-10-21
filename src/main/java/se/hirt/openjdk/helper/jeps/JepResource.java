@@ -18,14 +18,19 @@ public class JepResource {
 
 	@GET
 	@Path("/{number}")
-	public Response getJep(@PathParam("number") int number) {
+	public Response getJep(@PathParam("number")
+	int number) {
 		return jeps.getJep(number);
 	}
 
 	@GET
 	@Path("/search")
-	public Response searchJeps(@QueryParam("query") String query, @QueryParam("status") String status,
-			@QueryParam("release") String release, @QueryParam("limit") Integer limit, @QueryParam("offset") Integer offset) {
+	public Response searchJeps(@QueryParam("query")
+	String query, @QueryParam("status")
+	String status, @QueryParam("release")
+	String release, @QueryParam("limit")
+	Integer limit, @QueryParam("offset")
+	Integer offset) {
 		return jeps.searchJeps(query, status, release, limit, offset);
 	}
 }

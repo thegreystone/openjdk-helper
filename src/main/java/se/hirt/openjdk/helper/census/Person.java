@@ -73,12 +73,13 @@ public class Person {
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		builder.append("Person{\n\tuserid='").append(userid).append("'\n\tfullName='").append(fullName).append("'\n\taffiliations:");
+		builder.append("Person{\n\tuserid='").append(userid).append("'\n\tfullName='").append(fullName)
+				.append("'\n\taffiliations:");
 
 		for (Affiliation affiliation : affiliations.values()) {
 			String role = affiliation.getMembers().get(userid);
-			builder.append("\n\t\t").append(affiliation.getClass().getSimpleName()).append(": ").append(affiliation.getFullName())
-					.append(" - ").append(role);
+			builder.append("\n\t\t").append(affiliation.getClass().getSimpleName()).append(": ")
+					.append(affiliation.getFullName()).append(" - ").append(role);
 		}
 		builder.append("\n}\n");
 		return builder.toString();

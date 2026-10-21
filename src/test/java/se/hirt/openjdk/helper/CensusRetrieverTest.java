@@ -34,7 +34,8 @@ public class CensusRetrieverTest {
 			exchange.close();
 		});
 		server.start();
-		CensusRetriever retriever = new CensusRetriever("http://127.0.0.1:" + server.getAddress().getPort() + "/census");
+		CensusRetriever retriever = new CensusRetriever(
+				"http://127.0.0.1:" + server.getAddress().getPort() + "/census");
 		try {
 			IOException failure = assertThrows(IOException.class, retriever::retrieveCensusContent);
 			assertTrue(failure.getMessage().contains("503"));

@@ -16,9 +16,9 @@ public class ReleaseTools {
 	@Inject
 	ToolResults results;
 
-	@Tool(description = "Get a JDK feature release's milestone schedule (Rampdown Phase One/Two, release candidates, General Availability), the phase reached today, the next milestone and the targeted JEPs, from the official release page.",
-			annotations = @Annotations(readOnlyHint = true, destructiveHint = false, idempotentHint = true))
-	public ToolResponse getReleaseSchedule(@ToolArg(description = "Feature release number, for example 26") int release) {
+	@Tool(description = "Get a JDK feature release's milestone schedule (Rampdown Phase One/Two, release candidates, General Availability), the phase reached today, the next milestone and the targeted JEPs, from the official release page.", annotations = @Annotations(readOnlyHint = true, destructiveHint = false, idempotentHint = true))
+	public ToolResponse getReleaseSchedule(@ToolArg(description = "Feature release number, for example 26")
+	int release) {
 		return results.call(() -> releases.getReleaseSchedule(release));
 	}
 }

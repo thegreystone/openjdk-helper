@@ -53,9 +53,12 @@ public class CensusResource {
 	@GET
 	@Path("/projects/{projectid}/members")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getProjectMembers(@PathParam("projectid") String projectId,
-			@QueryParam("roles") String roles, @QueryParam("query") String query,
-			@QueryParam("limit") Integer limit, @QueryParam("offset") Integer offset) {
+	public Response getProjectMembers(@PathParam("projectid")
+	String projectId, @QueryParam("roles")
+	String roles, @QueryParam("query")
+	String query, @QueryParam("limit")
+	Integer limit, @QueryParam("offset")
+	Integer offset) {
 		return censusService.getProjectMembers(projectId, roles, query, limit, offset);
 	}
 
@@ -63,9 +66,8 @@ public class CensusResource {
 	@Path("/people")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getPeople(
-			@QueryParam("userid")
-			@Parameter(description = "Lists the person(s) with the specified userid(s). Multiple IDs can be provided as a comma-separated list (e.g., 'hirt,duke,iris'). If no userid is provided, returns all people in OpenJDK.", example = "hirt,duke")
-			String userId) {
+		@QueryParam("userid") @Parameter(description = "Lists the person(s) with the specified userid(s). Multiple IDs can be provided as a comma-separated list (e.g., 'hirt,duke,iris'). If no userid is provided, returns all people in OpenJDK.", example = "hirt,duke")
+		String userId) {
 		return censusService.getPeople(userId);
 	}
 
@@ -73,9 +75,8 @@ public class CensusResource {
 	@Path("/people/search")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response searchPeople(
-			@QueryParam("query")
-			@Parameter(description = "Search query for people using a regular expression. Searches through both userid and full names.", example = ".*Hirt")
-			String query) {
+		@QueryParam("query") @Parameter(description = "Search query for people using a regular expression. Searches through both userid and full names.", example = ".*Hirt")
+		String query) {
 		return censusService.searchPeople(query);
 	}
 
@@ -83,9 +84,8 @@ public class CensusResource {
 	@Path("/projects")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getProjects(
-			@QueryParam("projectid")
-			@Parameter(description = "Lists the project for the projectid, or all projects if not provided.", example = "jmc")
-			String projectId) {
+		@QueryParam("projectid") @Parameter(description = "Lists the project for the projectid, or all projects if not provided.", example = "jmc")
+		String projectId) {
 		return censusService.getProjects(projectId);
 	}
 
@@ -93,9 +93,8 @@ public class CensusResource {
 	@Path("/projects/search")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response searchProjects(
-			@QueryParam("query")
-			@Parameter(description = "Search query for projects using a regular expression. Searches both projectid and project names.", example = ".*Mission.*")
-			String query) {
+		@QueryParam("query") @Parameter(description = "Search query for projects using a regular expression. Searches both projectid and project names.", example = ".*Mission.*")
+		String query) {
 		return censusService.searchProjects(query);
 	}
 
@@ -103,9 +102,8 @@ public class CensusResource {
 	@Path("/groups")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getGroups(
-			@QueryParam("groupid")
-			@Parameter(description = "Lists the group for the groupid, or all if not provided.", example = "vulnerability")
-			String groupId) {
+		@QueryParam("groupid") @Parameter(description = "Lists the group for the groupid, or all if not provided.", example = "vulnerability")
+		String groupId) {
 		return censusService.getGroups(groupId);
 	}
 
@@ -113,9 +111,8 @@ public class CensusResource {
 	@Path("/groups/search")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response searchGroups(
-			@QueryParam("query")
-			@Parameter(description = "Search query for groups using a regular expression. Searches both groupid and group names.", example = ".*uln.*")
-			String query) {
+		@QueryParam("query") @Parameter(description = "Search query for groups using a regular expression. Searches both groupid and group names.", example = ".*uln.*")
+		String query) {
 		return censusService.searchGroups(query);
 	}
 }

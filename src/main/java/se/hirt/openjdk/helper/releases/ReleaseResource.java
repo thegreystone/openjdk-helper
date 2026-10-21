@@ -21,7 +21,8 @@ public class ReleaseResource {
 	@Path("/jdk/{release}")
 	@Operation(summary = "Get a JDK feature release's schedule, current phase and targeted JEPs")
 	public Response getReleaseSchedule(
-			@PathParam("release") @Parameter(description = "Feature release number, for example 26") int release) {
+		@PathParam("release") @Parameter(description = "Feature release number, for example 26")
+		int release) {
 		return releases.getReleaseSchedule(release);
 	}
 }

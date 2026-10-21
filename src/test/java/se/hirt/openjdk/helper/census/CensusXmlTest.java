@@ -31,7 +31,10 @@ class CensusXmlTest {
 	void keepsSnapshotAndReportsStaleAfterInvalidRefreshThenRecovers() throws IOException {
 		AtomicReference<String> content = new AtomicReference<>(fixture());
 		CensusRetriever retriever = new CensusRetriever("http://127.0.0.1/census.xml") {
-			@Override public String retrieveCensusContent() { return content.get(); }
+			@Override
+			public String retrieveCensusContent() {
+				return content.get();
+			}
 		};
 		OpenjdkCensusScraper scraper = new OpenjdkCensusScraper(retriever, 3600);
 		try {
@@ -39,7 +42,8 @@ class CensusXmlTest {
 			content.set("<html>Temporary proxy error</html>");
 			scraper.refresh();
 			assertEquals(8, scraper.getPeople().size());
-			assertEquals(before.get("lastSuccessfulRefresh"), scraper.getSnapshotMetadata().get("lastSuccessfulRefresh"));
+			assertEquals(before.get("lastSuccessfulRefresh"),
+					scraper.getSnapshotMetadata().get("lastSuccessfulRefresh"));
 			assertEquals(true, scraper.getSnapshotMetadata().get("stale"));
 			assertEquals(true, scraper.getSnapshotMetadata().get("lastRefreshFailed"));
 			content.set(fixture());
@@ -55,7 +59,8 @@ class CensusXmlTest {
 	@Test
 	void rejectsUnknownReferencesAndTruncatedXml() throws IOException {
 		String xml = fixture();
-		assertThrows(IllegalArgumentException.class, () -> new OpenjdkCensusScraper(xml.replace("ref=\"hirt\"", "ref=\"unknown\"")));
+		assertThrows(IllegalArgumentException.class,
+				() -> new OpenjdkCensusScraper(xml.replace("ref=\"hirt\"", "ref=\"unknown\"")));
 		assertThrows(IllegalArgumentException.class, () -> new OpenjdkCensusScraper(xml.replace("</census>", "")));
 	}
 

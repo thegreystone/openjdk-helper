@@ -56,16 +56,17 @@ final class McpProtocolAssertions {
 			assertEquals("object", tool.path("inputSchema").path("type").asText());
 			assertTrue(tool.path("annotations").path("readOnlyHint").asBoolean(), tool.toString());
 			if (tool.path("name").asText().equals("getPerson")) {
-				assertEquals("string", tool.path("inputSchema").path("properties").path("userid").path("type").asText());
+				assertEquals("string",
+						tool.path("inputSchema").path("properties").path("userid").path("type").asText());
 				assertTrue(tool.path("inputSchema").path("required").toString().contains("userid"));
 			}
 		}
-		assertEquals(Set.of("getVersion", "searchPeople", "getPerson", "searchProjects", "getProject",
-				"searchGroups", "getGroup", "getGitHubRepos", "getGitHubPulls", "getProjectMembers", "getCensusStatus",
-				"getContributionContext", "getBuildGuidance", "getOpenJdkReview", "getBackportStatus",
-				"getIssue", "searchIssues", "getJep", "searchJeps", "getProjectProcesses",
-				"getIssueFixStatus", "getPullRequestTriage", "getContributorRecord", "getProjectActivity",
-				"getReleaseSchedule", "searchMailingList", "searchDevelopersGuide"), names);
+		assertEquals(Set.of("getVersion", "searchPeople", "getPerson", "searchProjects", "getProject", "searchGroups",
+				"getGroup", "getGitHubRepos", "getGitHubPulls", "getProjectMembers", "getCensusStatus",
+				"getContributionContext", "getBuildGuidance", "getOpenJdkReview", "getBackportStatus", "getIssue",
+				"searchIssues", "getJep", "searchJeps", "getProjectProcesses", "getIssueFixStatus",
+				"getPullRequestTriage", "getContributorRecord", "getProjectActivity", "getReleaseSchedule",
+				"searchMailingList", "searchDevelopersGuide"), names);
 		assertFalse(listing.hasNonNull("nextCursor"), "All tools should fit on one page");
 		assertEquals(version, text(client.call("getVersion", Map.of()), false));
 
@@ -75,10 +76,12 @@ final class McpProtocolAssertions {
 		JsonNode partial = jsonText(client.call("getPerson", Map.of("userid", "hirt,no-such-openjdk-user")));
 		assertEquals(1, partial.path("results").size());
 		assertEquals("no-such-openjdk-user", partial.path("not_found").get(0).asText());
-		assertTrue(text(client.call("getPerson", Map.of("userid", "no-such-openjdk-user")), true).contains("no-such-openjdk-user"));
+		assertTrue(text(client.call("getPerson", Map.of("userid", "no-such-openjdk-user")), true)
+				.contains("no-such-openjdk-user"));
 
 		assertTrue(jsonText(client.call("searchPeople", Map.of("query", "Hirt"))).path("results").size() > 0);
-		assertEquals(0, jsonText(client.call("searchPeople", Map.of("query", "no-such-openjdk-user"))).path("results").size());
+		assertEquals(0,
+				jsonText(client.call("searchPeople", Map.of("query", "no-such-openjdk-user"))).path("results").size());
 		assertTrue(jsonText(client.call("getProject", Map.of("projectid", "jmc"))).path("results").size() > 0);
 		assertTrue(jsonText(client.call("searchProjects", Map.of("query", "jmc"))).path("results").size() > 0);
 		assertTrue(jsonText(client.call("getGroup", Map.of("groupid", "vulnerability"))).path("results").size() > 0);
@@ -88,12 +91,17 @@ final class McpProtocolAssertions {
 		text(client.call("getGitHubPulls", Map.of("owner", "", "repo", "")), true);
 
 		assertEquals("xml", jsonText(client.call("getCensusStatus", Map.of())).path("format").asText());
-		assertEquals(1, jsonText(client.call("getProjectMembers", Map.of("projectId", "jmc", "roles", "lead"))).path("total").asInt());
+		assertEquals(1, jsonText(client.call("getProjectMembers", Map.of("projectId", "jmc", "roles", "lead")))
+				.path("total").asInt());
 		Map<String, Object> repository = Map.of("owner", "openjdk", "repo", "jdk17u", "ref", "master");
-		assertEquals("jdk-updates", jsonText(client.call("getContributionContext", repository)).path("projectId").asText());
-		assertTrue(jsonText(client.call("getBuildGuidance", repository)).path("documents").get(0).path("available").asBoolean());
-		assertEquals("jmc", jsonText(client.call("getGitHubRepos", Map.of("user", "openjdk"))).path("items").get(0).path("name").asText());
-		assertTrue(jsonText(client.call("getGitHubPulls", Map.of("owner", "openjdk", "repo", "jmc", "user", "hirt", "limit", 10)))
+		assertEquals("jdk-updates",
+				jsonText(client.call("getContributionContext", repository)).path("projectId").asText());
+		assertTrue(jsonText(client.call("getBuildGuidance", repository)).path("documents").get(0).path("available")
+				.asBoolean());
+		assertEquals("jmc", jsonText(client.call("getGitHubRepos", Map.of("user", "openjdk"))).path("items").get(0)
+				.path("name").asText());
+		assertTrue(jsonText(
+				client.call("getGitHubPulls", Map.of("owner", "openjdk", "repo", "jmc", "user", "hirt", "limit", 10)))
 				.path("items").get(0).path("body").asText().contains("### Progress"));
 		var review = jsonText(client.call("getOpenJdkReview", Map.of("owner", "openjdk", "repo", "jmc", "number", 42)));
 		assertEquals("complete", review.path("status").asText());
@@ -101,13 +109,15 @@ final class McpProtocolAssertions {
 		assertEquals("Reviewer", review.path("reviews").get(0).path("skaraRole").asText());
 		assertEquals("aptmac", review.path("skaraReviewers").get(0).path("openjdkId").asText());
 		assertEquals("not_assessed", review.path("integrationReadiness").asText());
-		var backport = jsonText(client.call("getBackportStatus", Map.of("owner", "openjdk", "repo", "jmc",
-				"commit", "a".repeat(40), "targets", "openjdk/jmc@master")));
+		var backport = jsonText(client.call("getBackportStatus",
+				Map.of("owner", "openjdk", "repo", "jmc", "commit", "a".repeat(40), "targets", "openjdk/jmc@master")));
 		assertEquals("found", backport.path("targets").get(0).path("status").asText());
-		assertEquals("JMC-8639", jsonText(client.call("getIssue", Map.of("key", "JMC-8639"))).path("issue").path("key").asText());
+		assertEquals("JMC-8639",
+				jsonText(client.call("getIssue", Map.of("key", "JMC-8639"))).path("issue").path("key").asText());
 		assertEquals(1, jsonText(client.call("searchIssues", Map.of("project", "JMC"))).path("total").asInt());
 		assertTrue(text(client.call("getIssue", Map.of("key", "JMC-403")), true).contains("accessDenied"));
-		assertEquals("Fixture feature", jsonText(client.call("getJep", Map.of("number", 517))).path("jep").path("title").asText());
+		assertEquals("Fixture feature",
+				jsonText(client.call("getJep", Map.of("number", 517))).path("jep").path("title").asText());
 		assertEquals(1, jsonText(client.call("searchJeps", Map.of("release", "26"))).path("total").asInt());
 		assertTrue(jsonText(client.call("getProjectProcesses", Map.of("projectid", "jmc", "topic", "committer")))
 				.path("results").get(0).path("summary").asText().contains("Lazy Consensus"));
@@ -120,16 +130,19 @@ final class McpProtocolAssertions {
 		var triage = jsonText(client.call("getPullRequestTriage", Map.of("owner", "openjdk", "repo", "jmc")));
 		assertEquals(1, triage.path("groups").path("awaitingReview").path("count").asInt());
 		assertEquals(1, triage.path("labelCounts").path("rfr").asInt());
-		var record = jsonText(client.call("getContributorRecord", Map.of("owner", "openjdk", "repo", "jmc", "login", "hirt")));
+		var record = jsonText(
+				client.call("getContributorRecord", Map.of("owner", "openjdk", "repo", "jmc", "login", "hirt")));
 		assertEquals(1, record.path("integratedPullRequests").path("total").asInt());
 		assertEquals(0, record.path("openPullRequests").asInt());
-		var activity = jsonText(client.call("getProjectActivity", Map.of("owner", "openjdk", "repo", "jmc", "since", "2026-07-01", "until", "2026-09-30")));
+		var activity = jsonText(client.call("getProjectActivity",
+				Map.of("owner", "openjdk", "repo", "jmc", "since", "2026-07-01", "until", "2026-09-30")));
 		assertEquals(1, activity.path("integrated").path("total").asInt());
 		assertEquals("hirt", activity.path("firstTimeContributors").get(0).asText());
 		var schedule = jsonText(client.call("getReleaseSchedule", Map.of("release", 26)));
 		assertEquals(5, schedule.path("milestones").size());
 		assertEquals("2026-03-17", schedule.path("generalAvailability").asText());
-		var mail = jsonText(client.call("searchMailingList", Map.of("list", "jmc-dev", "month", "2026-02", "query", "CFV")));
+		var mail = jsonText(
+				client.call("searchMailingList", Map.of("list", "jmc-dev", "month", "2026-02", "query", "CFV")));
 		assertEquals(2, mail.path("total").asInt());
 		assertEquals("vote", mail.path("results").get(0).path("kind").asText());
 		var guide = jsonText(client.call("searchDevelopersGuide", Map.of("query", "backport")));
