@@ -197,6 +197,9 @@ Requirements: JDK 25 or later. Use `mvnw.cmd` in PowerShell/Command Prompt inste
 # REST, parsing and MCP tests, followed by packaged JVM protocol checks
 ./mvnw verify -DskipITs=false
 
+# Format the Java sources; the build's validate phase fails on unformatted code
+./mvnw spotless:apply
+
 # Development mode
 ./mvnw quarkus:dev
 
