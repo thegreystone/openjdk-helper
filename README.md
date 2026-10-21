@@ -144,6 +144,8 @@ The REST service is deployed at `https://api.hirt.se/openjdk`:
 
 The Custom GPT Actions schema is in [examples/customgpt.txt](examples/customgpt.txt). Existing REST paths and comma-separated ID queries remain supported.
 
+The hosted service is free and provided on a best-effort basis under the [terms of service](TERMS.md). See the [privacy notice](PRIVACY.md) for request processing, upstream services, caching, server logging and the differences between hosted and local use.
+
 ## MCP
 
 The server uses the Quarkiverse MCP extension for protocol negotiation, sessions and tool discovery. All 27 tools are read-only:

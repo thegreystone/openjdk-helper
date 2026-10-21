@@ -44,11 +44,13 @@ The ZIP can be built as a draft now. Before requesting review, add real, publicl
 
 | Location under `extensions.com.openai` | Required value |
 | --- | --- |
-| `interface.privacyPolicyURL` | Privacy policy for the hosted service |
-| `interface.termsOfServiceURL` | Terms for the hosted service |
+| `interface.privacyPolicyURL` | Public URL of the hosted service's [privacy notice](../PRIVACY.md), after publishing it |
+| `interface.termsOfServiceURL` | Public URL of the hosted service's [terms](../TERMS.md), after publishing them |
 | `review.demo_recording_url` | Reviewer-accessible video walkthrough |
 
 Policy text should reflect actual hosting, logging and upstream data handling. The repository's BSD software license is included in the package; it does not supply these service-policy fields. The existing website and support links identify this project and its maintainer. Check that the selected verified developer identity matches the listing.
+
+The demo is a video walkthrough available to reviewers, not a separate document or a file that must be included in the ZIP. Record the installed plugin answering representative requests, including tool use, results and source links, then set `extensions.com.openai.review.demo_recording_url` in `plugin.json` to the hosted video's HTTPS URL. Reviewers must be able to open it. The existing five positive and three negative cases can guide the recording; they remain separate review metadata. The [submission guide](https://developers.openai.com/plugins/deploy/submission) requires the video URL for MCP review.
 
 Run the stricter local check after filling these fields:
 
