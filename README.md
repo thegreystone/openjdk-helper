@@ -1,6 +1,12 @@
 [![Build](https://github.com/thegreystone/openjdk-helper/actions/workflows/build.yml/badge.svg)](https://github.com/thegreystone/openjdk-helper/actions/workflows/build.yml)
-[![Java](https://img.shields.io/badge/Java-25%2B-blue)](https://openjdk.org/projects/jdk/25/)
-[![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/thegreystone/openjdk-helper)](https://github.com/thegreystone/openjdk-helper/releases/latest)
+[![Java 25+](https://img.shields.io/badge/Java-25%2B-blue)](https://adoptium.net/)
+[![Quarkus](https://img.shields.io/badge/dynamic/xml?url=https%3A%2F%2Fraw.githubusercontent.com%2Fthegreystone%2Fopenjdk-helper%2Fmain%2Fpom.xml&query=%2F%2F*%5Blocal-name%28%29%3D%27quarkus.platform.version%27%5D&label=Quarkus&color=blueviolet)](https://quarkus.io/)
+[![GraalVM Native](https://img.shields.io/badge/GraalVM-native--image-orange)](https://www.graalvm.org/)
+[![MCP](https://img.shields.io/badge/MCP-server-teal)](https://modelcontextprotocol.io/)
+[![Docker Pulls](https://img.shields.io/docker/pulls/greystone/openjdk-helper)](https://hub.docker.com/r/greystone/openjdk-helper)
+[![Docker Image Version](https://img.shields.io/docker/v/greystone/openjdk-helper?sort=semver&label=docker)](https://hub.docker.com/r/greystone/openjdk-helper)
+[![License: BSD-3](https://img.shields.io/badge/License-BSD--3-green)](https://opensource.org/licenses/BSD-3-Clause)
 
 # OpenJDK Helper
 
