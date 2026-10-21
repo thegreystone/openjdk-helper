@@ -324,7 +324,7 @@ docker buildx build -f src/main/docker/Dockerfile.jvm --platform linux/amd64,lin
 
 For hirt.se, forward `/openjdk/` to the application's `/`, preserve the request method, and pass `MCP-Session-Id` and `MCP-Protocol-Version` headers. Disable response buffering and allow long-lived connections for MCP event streams. Forwarded host/prefix support is enabled; supply these headers only from the trusted reverse proxy.
 
-All tools are stateless, and from 0.2.1 the server accepts Streamable HTTP requests whose session it never issued (`quarkus.mcp.server.http.streamable.dummy-init`, a build-time setting), so several replicas can sit behind one load balancer without session affinity; each pod serves whichever request reaches it. Server-initiated messages are not used, so nothing is lost. The 0.2.0 image still keeps sessions in memory and needs a single replica or sticky routing.
+All tools are stateless, and from 0.2.1 the server accepts Streamable HTTP requests whose session it never issued (`quarkus.mcp.server.http.streamable.auto-init`), so several replicas can sit behind one load balancer without session affinity; each pod serves whichever request reaches it. Server-initiated messages are not used, so nothing is lost. The 0.2.0 image still keeps sessions in memory and needs a single replica or sticky routing.
 
 Streamable HTTP uses the single `/openjdk/mcp` URL. With the legacy SSE transport, this extension advertises `/mcp/messages/{id}` in its first event; a proxy that strips `/openjdk` must also route that advertised message path to this service. Prefer Streamable HTTP for a deployment under a path prefix.
 

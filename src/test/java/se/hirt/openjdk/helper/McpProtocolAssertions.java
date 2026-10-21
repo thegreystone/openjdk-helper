@@ -55,6 +55,9 @@ final class McpProtocolAssertions {
 			names.add(tool.path("name").asText());
 			assertEquals("object", tool.path("inputSchema").path("type").asText());
 			assertTrue(tool.path("annotations").path("readOnlyHint").asBoolean(), tool.toString());
+			// Claude Code rejects a tools/list whose annotations.title is JSON null; it must be absent or a string.
+			JsonNode title = tool.path("annotations").path("title");
+			assertTrue(title.isMissingNode() || title.isTextual(), tool.toString());
 			if (tool.path("name").asText().equals("getPerson")) {
 				assertEquals("string",
 						tool.path("inputSchema").path("properties").path("userid").path("type").asText());
