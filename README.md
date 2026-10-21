@@ -6,7 +6,6 @@
 [![MCP](https://img.shields.io/badge/MCP-server-teal)](https://modelcontextprotocol.io/)
 [![Docker Pulls](https://img.shields.io/docker/pulls/greystone/openjdk-helper)](https://hub.docker.com/r/greystone/openjdk-helper)
 [![Docker Image Version](https://img.shields.io/docker/v/greystone/openjdk-helper?sort=semver&label=docker)](https://hub.docker.com/r/greystone/openjdk-helper)
-[![License: BSD-3](https://img.shields.io/badge/License-BSD--3-green)](https://opensource.org/licenses/BSD-3-Clause)
 
 # OpenJDK Helper
 
