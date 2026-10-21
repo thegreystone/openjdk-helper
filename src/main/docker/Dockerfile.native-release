@@ -1,0 +1,24 @@
+####
+# Multi-architecture native image built by the release workflow from the GraalVM binaries of the native matrix.
+# The binaries are staged per architecture before the build:
+#
+#   target/native/amd64/openjdk-helper   (openjdk-helper-<version>-linux-x86_64)
+#   target/native/arm64/openjdk-helper   (openjdk-helper-<version>-linux-aarch64)
+#
+# docker buildx build -f src/main/docker/Dockerfile.native-release --platform linux/amd64,linux/arm64 \
+#   -t greystone/openjdk-helper:<version>-native --push .
+#
+# For a single local build from target/*-runner use Dockerfile.native-micro instead.
+###
+FROM quay.io/quarkus/ubi9-quarkus-micro-image:2.0
+ARG TARGETARCH
+WORKDIR /work/
+RUN chown 1001 /work \
+    && chmod "g+rwX" /work \
+    && chown 1001:root /work
+COPY --chown=1001:root --chmod=0755 target/native/${TARGETARCH}/openjdk-helper /work/application
+
+EXPOSE 8080
+USER 1001
+
+ENTRYPOINT ["./application", "-Dquarkus.http.host=0.0.0.0"]

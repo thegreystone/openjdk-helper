@@ -12,7 +12,8 @@ import { createServer as tcpServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { createInterface } from 'node:readline';
-import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { promisify } from 'node:util';
 import { validateManifest } from '@anthropic-ai/mcpb/cli';
 
@@ -26,7 +27,8 @@ function inside(root, relative) {
 // Use the official CLI to handle MCPB signatures, archive paths and executable
 // permissions. In pinned MCPB 2.1.2 unpackExtension is not a public API export.
 async function extract(bundle, directory) {
-  const packageRoot = new URL('../', import.meta.resolve('@anthropic-ai/mcpb'));
+  // createRequire rather than import.meta.resolve, so the test also runs on Node 18 when signing locally.
+  const packageRoot = new URL('../', pathToFileURL(createRequire(import.meta.url).resolve('@anthropic-ai/mcpb')));
   const metadata = JSON.parse(await readFile(new URL('package.json', packageRoot), 'utf8'));
   const cli = fileURLToPath(new URL(metadata.bin, packageRoot));
   await promisify(execFile)(process.execPath, [cli, 'unpack', bundle, directory], {

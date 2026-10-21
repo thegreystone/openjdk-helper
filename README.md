@@ -4,7 +4,116 @@
 
 # OpenJDK Helper
 
-A Quarkus service for OpenJDK contributors and project leads: census roles, GitHub reviews and backports, JBS issues, JEPs, branch-specific build guidance and project processes. It serves REST/OpenAPI for the [OpenJDK Project Assistant](https://chatgpt.com/g/g-cdK5pudqC-openjdk-project-assistant) and exposes the same operations through MCP.
+OpenJDK Helper gives an AI assistant reliable, source-backed answers about OpenJDK. Ask Claude or Codex who the Reviewers of a project are, whether a fix has been backported to 17u and 21u, what a JEP's status is, which pull requests are waiting for review, when JDK 27 enters rampdown, or how a Committer election works, and it answers from the census, JBS, GitHub, the JEP index, the release pages, the mailing list archives and the Developers' Guide, with links to the sources.
+
+It is built for OpenJDK contributors and project leads. Every tool is read-only and reports what the sources say, including when data is partial or unavailable, rather than guessing. The same 27 tools are available as an MCP server for AI clients and as a REST/OpenAPI service, which also powers the [OpenJDK Project Assistant](https://chatgpt.com/g/g-cdK5pudqC-openjdk-project-assistant) Custom GPT.
+
+Things to try once it is installed:
+
+- "Who are the Reviewers in the JMC project?"
+- "Where has JDK-8394772 been fixed, and which backports are still open?"
+- "Triage the open pull requests in openjdk/jmc."
+- "What phase is JDK 27 in, and when is General Availability?"
+- "Summarize what was integrated in openjdk/jmc last quarter."
+- "What does the Developers' Guide say about sponsoring a change?"
+
+## Installing
+
+There are two ways to use the server from an AI client. The **hosted service** at `https://api.hirt.se/openjdk/mcp` needs nothing installed and is always on the latest release. A **local install** runs the native executable from the [Releases page](https://github.com/thegreystone/openjdk-helper/releases/latest) on your own machine over stdio, so upstream requests go out from your network and your own `OPENJDK_GITHUB_TOKEN` can be used. Both expose the same 27 tools.
+
+Release files, substituting the version you downloaded:
+
+| Platform | Native executable | MCP Bundle |
+| --- | --- | --- |
+| Linux x86_64 | `openjdk-helper-0.2.0-linux-x86_64` | `openjdk-helper-0.2.0-linux-x86_64.mcpb` |
+| Linux aarch64 | `openjdk-helper-0.2.0-linux-aarch64` | `openjdk-helper-0.2.0-linux-aarch64.mcpb` |
+| macOS Apple Silicon | `openjdk-helper-0.2.0-macos-aarch64` | `openjdk-helper-0.2.0-macos-aarch64.mcpb` |
+| Windows x86_64 | `openjdk-helper-0.2.0-windows-x86_64.exe` | `openjdk-helper-0.2.0-windows-x86_64.mcpb` |
+
+The macOS executable is signed and notarized; the Windows executable is Authenticode-signed. `openjdk-helper-0.2.0-runner.jar` is the same server for any platform with Java 25 or later. A local executable started with `-Dquarkus.profile=stdio` speaks MCP on stdin/stdout, keeps the HTTP listener off so several clients can each launch their own process, and logs to stderr.
+
+### Claude Code
+
+**Hosted:**
+
+```sh
+claude mcp add --transport http openjdk-helper https://api.hirt.se/openjdk/mcp
+```
+
+**Local**, pointing at the downloaded executable:
+
+```sh
+# macOS or Linux
+claude mcp add openjdk-helper -- /path/to/openjdk-helper-0.2.0-macos-aarch64 -Dquarkus.profile=stdio
+
+# Windows
+claude mcp add openjdk-helper -- C:\tools\openjdk-helper\openjdk-helper-0.2.0-windows-x86_64.exe -Dquarkus.profile=stdio
+```
+
+Both commands register the server for the current project only. Add `--scope user` to make it available in every project on your machine, or `--scope project` to write it to a `.mcp.json` file in the repository that teammates get when they clone it. A `.mcp.json` for the hosted service looks like this:
+
+```json
+{
+  "mcpServers": {
+    "openjdk-helper": {
+      "type": "http",
+      "url": "https://api.hirt.se/openjdk/mcp"
+    }
+  }
+}
+```
+
+Run `/mcp` inside Claude Code to check the connection and list the tools, and `claude mcp remove openjdk-helper` to take it out again. Claude Code launches the process from a normal working directory, so the `-Duser.dir` workaround is not needed.
+
+### Claude Desktop
+
+**Hosted:** open *Settings → Connectors → Add custom connector*, name it `OpenJDK Helper` and enter the URL `https://api.hirt.se/openjdk/mcp`. Custom connectors are available on the Claude plans that support them; no authentication is needed.
+
+**Local:** download the `.mcpb` bundle for your platform, then double-click it or open it from *Settings → Extensions → Advanced settings → Install Extension…*. Claude Desktop shows its standard unsigned-extension notice, because the bundle file itself carries no signature (the executable inside it is signed); confirm with *Install*. There is nothing to configure, and no Java is needed. Start a new chat and the tools appear in the tool list.
+
+If you prefer editing the config file instead of installing the bundle, add the executable to `claude_desktop_config.json` (`%APPDATA%\Claude\claude_desktop_config.json` on Windows, `~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
+
+```json
+{
+  "mcpServers": {
+    "openjdk-helper": {
+      "command": "C:\\tools\\openjdk-helper\\openjdk-helper-0.2.0-windows-x86_64.exe",
+      "args": ["-Dquarkus.profile=stdio"]
+    }
+  }
+}
+```
+
+If Claude Desktop starts the process in a directory it cannot write to, add `-Duser.dir=C:\\tools\\openjdk-helper` to the arguments. For the jar, use `java` as the command with the arguments `-Dquarkus.profile=stdio`, `-jar` and the absolute jar path. Restart Claude Desktop afterwards.
+
+### Codex CLI
+
+**Hosted**, in `~/.codex/config.toml` (recent Codex versions support Streamable HTTP servers by URL; the equivalent command is `codex mcp add openjdk-helper --url https://api.hirt.se/openjdk/mcp`):
+
+```toml
+[mcp_servers.openjdk-helper]
+url = "https://api.hirt.se/openjdk/mcp"
+```
+
+**Local**, with the downloaded executable:
+
+```toml
+[mcp_servers.openjdk-helper]
+command = "/path/to/openjdk-helper-0.2.0-linux-x86_64"
+args = ["-Dquarkus.profile=stdio"]
+```
+
+Or let the CLI write it:
+
+```sh
+codex mcp add openjdk-helper -- /path/to/openjdk-helper-0.2.0-linux-x86_64 -Dquarkus.profile=stdio
+```
+
+Then `codex mcp list` should show `openjdk-helper`.
+
+### Other clients and local development
+
+Any client that speaks **Streamable HTTP** can use `https://api.hirt.se/openjdk/mcp`; legacy SSE clients can use `/mcp/sse`, and `/mcp-info` serves human-readable connection information. A locally started server listens on `http://localhost:8080/mcp`. Clients that launch a stdio process use the executable with `-Dquarkus.profile=stdio` as shown above. The older `-Dquarkus.mcp.server.stdio.enabled=true` switch still works but leaves the HTTP listener enabled; prefer the profile.
 
 ## Public service
 
@@ -109,86 +218,6 @@ GitHub, JBS, JEP and repository-document requests share a bounded cache and a 2 
 
 JBS access depends on the upstream deployment. Access denial returns a clear unavailable response (REST 503, MCP tool error) with the upstream status and source link. Authentication cannot guarantee access. JBS search accepts literal text and exact filters for the JDK, JMC, CODETOOLS and SKARA projects, rather than unrestricted JQL. JEP, release schedule, mailing list and Developers' Guide data are read from the published HTML; unexpected page formats produce an explicit error. Redirects are never followed, so a moved resource is reported with its new location instead of being fetched with the caller's token.
 
-### Remote HTTP
-
-Use **Streamable HTTP** with `http://localhost:8080/mcp` locally. After deploying this build to the public service, the corresponding URL is `https://api.hirt.se/openjdk/mcp`. Legacy SSE clients can use `/mcp/sse`. `/mcp-info` serves human-readable connection information.
-
-For an MCP client that accepts a remote URL:
-
-```json
-{
-  "mcpServers": {
-    "openjdk-helper": {
-      "url": "https://api.hirt.se/openjdk/mcp"
-    }
-  }
-}
-```
-
-Select Streamable HTTP in the client's transport settings. The existing production deployment may need upgrading before it supports this endpoint.
-
-### Install a local MCPB bundle
-
-Download `openjdk-helper-X.Y.Z-<platform>.mcpb` from [GitHub Releases](https://github.com/thegreystone/openjdk-helper/releases) and install it using your MCP client's extension installer. Choose the package matching your machine: `windows-x86_64`, `macos-aarch64` (Apple Silicon), `linux-x86_64`, or `linux-aarch64`.
-
-Each bundle contains a native executable and launches with the `stdio` profile by default. It needs no Java installation or port configuration. The HTTP listener is disabled; the local process fetches OpenJDK, GitHub and JBS data as needed. Public sources work without credentials where permitted; optional tokens and JBS access constraints are described above.
-
-To build a bundle yourself after compiling the native executable, install Node.js 22 or later for the packaging tools:
-
-```sh
-npm ci --prefix mcpb
-node mcpb/pack.mjs 0.2.0-SNAPSHOT windows-x86_64 target/openjdk-helper-0.2.0-SNAPSHOT-runner.exe
-node mcpb/test-mcpb.mjs target/openjdk-helper-0.2.0-SNAPSHOT-windows-x86_64.mcpb
-```
-
-Use the matching suffix and binary for Linux/macOS. Packaging validates the manifest and executable architecture. The smoke test extracts the finished archive and launches its manifest command to check MCP initialization, tool discovery and census lookup, clean stdout, and disabled HTTP binding. Node.js is only needed to build/test bundles, not to use them.
-
-### Signing release binaries
-
-The release workflow signs the macOS binary with a Developer ID certificate (hardened runtime, timestamp) and notarizes it before packing the bundle, using the `MACOS_CERTIFICATE`, `MACOS_CERTIFICATE_PWD`, `MACOS_SIGNING_IDENTITY`, `NOTARIZATION_APPLE_ID`, `NOTARIZATION_PASSWORD` and `NOTARIZATION_TEAM_ID` repository secrets. A bare executable cannot be stapled, so Gatekeeper verifies the notarization ticket online on first launch.
-
-The Windows binary is published unsigned and signed afterwards with a Certum code-signing certificate through SimplySign Desktop, which needs an interactive OTP login and therefore runs on the maintainer's machine. With SimplySign Desktop logged in, `gh` authenticated and `npm ci --prefix mcpb` done:
-
-```powershell
-.\mcpb\Sign-Release.ps1 -Version 0.2.0            # add -NoUpload to inspect target\signed first
-```
-
-The script downloads the Windows binary from the release, signs it (SHA-256, Certum RFC 3161 timestamp), verifies signature and timestamp, re-packs the Windows `.mcpb` around the signed binary with `mcpb/pack.mjs`, runs `mcpb/test-mcpb.mjs` against that bundle and replaces both release assets. The certificate thumbprint comes from `$env:CERTUM_SIGN_THUMBPRINT` (or `$env:DISKSPACE_SIGN_THUMBPRINT`), so renewal is a profile edit rather than a commit; always pin by thumbprint. Not signed: the `.mcpb` container itself (its signing needs a PEM private key that neither SimplySign nor the Apple keychain exposes) and the Linux binaries.
-
-### Manual local stdio
-
-The `stdio` profile enables MCP over stdin/stdout and disables the HTTP listener, so multiple desktop clients can launch their own process without port conflicts. Logs go to stderr.
-
-Build a jar with Java 25 or later:
-
-```sh
-./mvnw verify -Duber-jar -DskipITs=false
-java -Dquarkus.profile=stdio -jar target/openjdk-helper-0.2.0-SNAPSHOT-runner.jar
-```
-
-For a native executable, use the same profile:
-
-```sh
-./target/openjdk-helper-0.2.0-SNAPSHOT-runner -Dquarkus.profile=stdio
-```
-
-Example desktop MCP configuration (substitute the absolute path to your binary):
-
-```json
-{
-  "mcpServers": {
-    "openjdk-helper": {
-      "command": "C:\\tools\\openjdk-helper\\openjdk-helper-0.2.0-SNAPSHOT-runner.exe",
-      "args": ["-Dquarkus.profile=stdio"]
-    }
-  }
-}
-```
-
-For the jar, use `java` as the command and arguments `-Dquarkus.profile=stdio`, `-jar`, and the absolute jar path. If a Windows client starts the process in a restricted directory, set its working directory to a writable directory, or supply `-Duser.dir=C:\\tools\\openjdk-helper`.
-
-The older `-Dquarkus.mcp.server.stdio.enabled=true` switch still works; it leaves the HTTP listener enabled. Prefer the profile for desktop clients.
-
 ## Build and test
 
 Requirements: JDK 25 or later. Use `mvnw.cmd` in PowerShell/Command Prompt instead of `./mvnw`.
@@ -217,7 +246,7 @@ Install GraalVM for JDK 25 and the platform C/C++ toolchain. On Windows, use Vis
 ./mvnw verify -Dnative
 ```
 
-This builds `target/openjdk-helper-0.2.0-SNAPSHOT-runner` (`.exe` on Windows) and runs the packaged protocol checks against that executable. No JVM is needed to run it. Unused AWT/image-processing dependencies have been removed, so no font libraries or AWT sidecars are required.
+This builds `target/openjdk-helper-0.2.1-SNAPSHOT-runner` (`.exe` on Windows) and runs the packaged protocol checks against that executable. No JVM is needed to run it. Unused AWT/image-processing dependencies have been removed, so no font libraries or AWT sidecars are required.
 
 Alternatively, build a Linux binary with Docker/Podman:
 
@@ -226,6 +255,45 @@ Alternatively, build a Linux binary with Docker/Podman:
 ```
 
 Run native `verify` on a matching host platform; a container-built Linux binary cannot execute directly on Windows or macOS.
+
+### MCP Bundles
+
+Each `.mcpb` bundle wraps the native executable for its platform and launches it with the `stdio` profile. It needs no Java installation or port configuration; the local process fetches OpenJDK, GitHub and JBS data as needed. Public sources work without credentials where permitted; optional tokens and JBS access constraints are described above.
+
+To build a bundle yourself after compiling the native executable, install Node.js 22 or later for the packaging tools:
+
+```sh
+npm ci --prefix mcpb
+node mcpb/pack.mjs 0.2.1-SNAPSHOT windows-x86_64 target/openjdk-helper-0.2.1-SNAPSHOT-runner.exe
+node mcpb/test-mcpb.mjs target/openjdk-helper-0.2.1-SNAPSHOT-windows-x86_64.mcpb
+```
+
+Use the matching suffix and binary for Linux/macOS. Packaging validates the manifest and executable architecture. The smoke test extracts the finished archive and launches its manifest command to check MCP initialization, tool discovery and census lookup, clean stdout, and disabled HTTP binding. Node.js is only needed to build/test bundles, not to use them.
+
+### Signing release binaries
+
+The release workflow signs the macOS binary with a Developer ID certificate (hardened runtime, timestamp) and notarizes it before packing the bundle, using the `MACOS_CERTIFICATE`, `MACOS_CERTIFICATE_PWD`, `MACOS_SIGNING_IDENTITY`, `NOTARIZATION_APPLE_ID`, `NOTARIZATION_PASSWORD` and `NOTARIZATION_TEAM_ID` repository secrets. A bare executable cannot be stapled, so Gatekeeper verifies the notarization ticket online on first launch.
+
+The Windows binary is published unsigned and signed afterwards with a Certum code-signing certificate through SimplySign Desktop, which needs an interactive OTP login and therefore runs on the maintainer's machine. With SimplySign Desktop logged in, `gh` authenticated and `npm ci --prefix mcpb` done:
+
+```powershell
+.\mcpb\Sign-Release.ps1 -Version 0.2.0            # add -NoUpload to inspect target\signed first
+```
+
+The script downloads the Windows binary from the release, signs it (SHA-256, Certum RFC 3161 timestamp), verifies signature and timestamp, re-packs the Windows `.mcpb` around the signed binary with `mcpb/pack.mjs`, runs `mcpb/test-mcpb.mjs` against that bundle and replaces both release assets. The certificate thumbprint comes from `$env:CERTUM_SIGN_THUMBPRINT` (or `$env:DISKSPACE_SIGN_THUMBPRINT`), so renewal is a profile edit rather than a commit; always pin by thumbprint. Not signed: the `.mcpb` container itself (its signing needs a PEM private key that neither SimplySign nor the Apple keychain exposes) and the Linux binaries.
+
+### Running a build you made yourself over stdio
+
+Build a jar with Java 25 or later, or a native executable as described below, and start it with the `stdio` profile:
+
+```sh
+./mvnw verify -Duber-jar -DskipITs=false
+java -Dquarkus.profile=stdio -jar target/openjdk-helper-0.2.1-SNAPSHOT-runner.jar
+
+./target/openjdk-helper-0.2.1-SNAPSHOT-runner -Dquarkus.profile=stdio
+```
+
+Point the client configurations above at that jar or executable instead of a release download.
 
 ### Containers and reverse proxy
 
@@ -239,7 +307,14 @@ Container creation is opt-in:
 docker run --rm -p 8080:8080 greystone/openjdk-helper:latest
 ```
 
-Pushing a `v*` tag publishes the multi-architecture JVM image as `greystone/openjdk-helper:X.Y.Z` and `:latest` through `.github/workflows/release.yml`, using the `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` repository secrets. `:latest` is no longer pushed on every commit to `main`. To publish an image by hand, for example a hotfix without a release:
+Pushing a `v*` tag publishes two multi-architecture images (linux/amd64 and linux/arm64) through `.github/workflows/release.yml`, using the `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` repository secrets:
+
+| Image | Contents | Size and footprint |
+| --- | --- | --- |
+| `greystone/openjdk-helper:X.Y.Z`, `:latest` | Temurin 25 JRE with the fast-jar | about 360 MB; roughly 150 MiB resident |
+| `greystone/openjdk-helper:X.Y.Z-native`, `:native` | GraalVM native executable on the minimal UBI 9 base, built with `Dockerfile.native-release` from the release binaries | about 100 MB; roughly 30 MiB resident, starts in about a second |
+
+The native image is the better fit for small nodes such as a Raspberry Pi cluster: no JVM flags, no heap sizing, and the same REST and MCP endpoints and configuration properties. Both architectures are started and checked in the workflow before the image is pushed. `:latest` is no longer pushed on every commit to `main`. To publish the JVM image by hand, for example a hotfix without a release:
 
 ```sh
 ./mvnw clean package -DskipTests
@@ -248,6 +323,8 @@ docker buildx build -f src/main/docker/Dockerfile.jvm --platform linux/amd64,lin
 ```
 
 For hirt.se, forward `/openjdk/` to the application's `/`, preserve the request method, and pass `MCP-Session-Id` and `MCP-Protocol-Version` headers. Disable response buffering and allow long-lived connections for MCP event streams. Forwarded host/prefix support is enabled; supply these headers only from the trusted reverse proxy.
+
+All tools are stateless, and from 0.2.1 the server accepts Streamable HTTP requests whose session it never issued (`quarkus.mcp.server.http.streamable.dummy-init`, a build-time setting), so several replicas can sit behind one load balancer without session affinity; each pod serves whichever request reaches it. Server-initiated messages are not used, so nothing is lost. The 0.2.0 image still keeps sessions in memory and needs a single replica or sticky routing.
 
 Streamable HTTP uses the single `/openjdk/mcp` URL. With the legacy SSE transport, this extension advertises `/mcp/messages/{id}` in its first event; a proxy that strips `/openjdk` must also route that advertised message path to this service. Prefer Streamable HTTP for a deployment under a path prefix.
 
