@@ -37,6 +37,7 @@ import java.util.Map;
 public class Person {
 	private final String userid;
 	private final String fullName;
+	private String organization;
 	private final Map<String, Affiliation> affiliations = new HashMap<>();
 
 	public Person(String userid, String fullName) {
@@ -55,6 +56,14 @@ public class Person {
 
 	public String getFullName() {
 		return fullName;
+	}
+
+	public String getOrganization() {
+		return organization;
+	}
+
+	public void setOrganization(String organization) {
+		this.organization = organization;
 	}
 
 	public Map<String, Affiliation> getAffiliations() {

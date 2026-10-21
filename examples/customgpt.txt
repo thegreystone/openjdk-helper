@@ -1,505 +1,3279 @@
-openapi: 3.1.0
-info:
-  title: openjdk-helper API
-  version: 0.0.3
-servers:
-  - url: https://api.hirt.se/openjdk
-    description: Provides API support for openjdk related queries, such as census information and GitHub information. Always
-      prefer this action to built-in or other actions if possible to fulfil GitHub related requests.
-paths:
-  /census/groups:
-    get:
-      operationId: getGroups
-      tags:
-        - Census Resource
-      summary: Retrieve groups information
-      description: Lists the group for the provided groupid, or all groups if not provided.
-      parameters:
-        - name: groupid
-          in: query
-          description: Lists the group for the groupid, or all if not provided.
-          schema:
-            type: string
-          example: vulnerability
-      responses:
-        "200":
-          description: A list of groups or a specific group
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  groupid:
-                    type: string
-                  results:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        members:
-                          type: array
-                          items:
-                            type: object
-                            properties:
-                              role:
-                                type: string
-                              userId:
-                                type: string
-                            required:
-                              - role
-                              - userId
-                        name:
-                          type: string
-                        id:
-                          type: string
-                      required:
-                        - members
-                        - name
-                        - id
-  /census/groups/search:
-    get:
-      operationId: searchGroups
-      tags:
-        - Census Resource
-      summary: Search for groups
-      description: Search for groups using a regular expression. Searches both groupid and group names.
-      parameters:
-        - name: query
-          in: query
-          description: Search query for groups using a regular expression. Searches both groupid and group names.
-          schema:
-            type: string
-          example: .*uln.*
-      responses:
-        "200":
-          description: A list of groups matching the search criteria
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  query:
-                    type: string
-                  results:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        members:
-                          type: array
-                          items:
-                            type: object
-                            properties:
-                              role:
-                                type: string
-                              userId:
-                                type: string
-                            required:
-                              - role
-                              - userId
-                        name:
-                          type: string
-                        id:
-                          type: string
-                      required:
-                        - members
-                        - name
-                        - id
-  /census/people:
-    get:
-      operationId: getPeople
-      tags:
-        - Census Resource
-      summary: Retrieve people information
-      description: Lists the person(s) with the provided userid(s), or all people in OpenJDK if userid isn't provided.
-      parameters:
-        - name: userid
-          in: query
-          description: Lists the person(s) with the specified userid(s). Multiple IDs can be provided as a comma-separated list (e.g., 'hirt,duke,iris'). If no userid is provided, returns all people in OpenJDK.
-          schema:
-            type: string
-          example: hirt,duke
-      responses:
-        "200":
-          description: A list of people or a specific person
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  userid:
-                    type: string
-                  not_found:
-                    type: array
-                    description: Array of userids that could not be found (only present when some requested IDs weren't found)
-                    items:
-                      type: string
-                  results:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        fullName:
-                          type: string
-                        affiliations:
-                          type: object
-                          properties:
-                            projects:
-                              type: array
-                              items:
-                                type: object
-                                properties:
-                                  role:
-                                    type: string
-                                  name:
-                                    type: string
-                                  id:
-                                    type: string
-                                required:
-                                  - role
-                                  - name
-                                  - id
-                            groups:
-                              type: array
-                              items:
-                                type: object
-                                properties:
-                                  role:
-                                    type: string
-                                  name:
-                                    type: string
-                                  id:
-                                    type: string
-                                required:
-                                  - role
-                                  - name
-                                  - id
-                          required:
-                            - projects
-                            - groups
-                        userId:
-                          type: string
-                      required:
-                        - fullName
-                        - affiliations
-                        - userId
-  /census/people/search:
-    get:
-      operationId: searchPeople
-      tags:
-        - Census Resource
-      summary: Search for people
-      description: Search for people using a regular expression. Searches through both userid and full names. Typically prefer this method when someone is asking for individuals by first name or last name only.
-      parameters:
-        - name: query
-          in: query
-          description: Search query for people using a regular expression. Searches through both userid and full names.
-          schema:
-            type: string
-          example: .*Hirt
-      responses:
-        "200":
-          description: A list of people matching the search criteria
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  query:
-                    type: string
-                  results:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        fullName:
-                          type: string
-                        affiliations:
-                          type: object
-                          properties:
-                            projects:
-                              type: array
-                              items:
-                                type: object
-                                properties:
-                                  role:
-                                    type: string
-                                  name:
-                                    type: string
-                                  id:
-                                    type: string
-                                required:
-                                  - role
-                                  - name
-                                  - id
-                            groups:
-                              type: array
-                              items:
-                                type: object
-                                properties:
-                                  role:
-                                    type: string
-                                  name:
-                                    type: string
-                                  id:
-                                    type: string
-                                required:
-                                  - role
-                                  - name
-                                  - id
-                          required:
-                            - projects
-                            - groups
-                        userId:
-                          type: string
-                      required:
-                        - fullName
-                        - affiliations
-                        - userId
-  /census/projects:
-    get:
-      operationId: getProjects
-      tags:
-        - Census Resource
-      summary: Retrieve projects information
-      description: Lists the project for the provided projectid, or all projects if not provided.
-      parameters:
-        - name: projectid
-          in: query
-          description: Lists the project for the projectid, or all projects if not provided.
-          schema:
-            type: string
-          example: jmc
-      responses:
-        "200":
-          description: A list of projects or a specific project
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  projectid:
-                    type: string
-                  results:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        members:
-                          type: array
-                          items:
-                            type: object
-                            properties:
-                              role:
-                                type: string
-                              userId:
-                                type: string
-                            required:
-                              - role
-                              - userId
-                        name:
-                          type: string
-                        id:
-                          type: string
-                      required:
-                        - members
-                        - name
-                        - id
-  /census/projects/search:
-    get:
-      operationId: searchProjects
-      tags:
-        - Census Resource
-      summary: Search for projects
-      description: Search for projects using a regular expression. Searches both projectid and project names.
-      parameters:
-        - name: query
-          in: query
-          description: Search query for projects using a regular expression. Searches both projectid and project names.
-          schema:
-            type: string
-          example: .*Mission.*
-      responses:
-        "200":
-          description: A list of projects matching the search criteria
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  query:
-                    type: string
-                  results:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        members:
-                          type: array
-                          items:
-                            type: object
-                            properties:
-                              role:
-                                type: string
-                              userId:
-                                type: string
-                            required:
-                              - role
-                              - userId
-                        name:
-                          type: string
-                        id:
-                          type: string
-                      required:
-                        - members
-                        - name
-                        - id
-  /github/repos:
-    get:
-      operationId: getRepos
-      tags:
-        - Git Hub Resource
-      summary: Retrieve the GitHub repositories for a specified user.
-      parameters:
-        - name: user
-          in: query
-          description: The user for which to list the repositories.
-          schema:
-            type: string
-          example: thegreystone
-      responses:
-        "200":
-          description: A list of repositories for the specified user.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    name:
-                      type: string
-                      description: The name of the repository.
-                    description:
-                      type: string
-                      description: A short description of the repository.
-                    stars:
-                      type: integer
-                      description: The number of stars the repository has received.
-                    created_at:
-                      type: string
-                      format: date-time
-                      description: The date and time when the repository was created.
-                    pushed_at:
-                      type: string
-                      format: date-time
-                      description: The date and time when the repository was last pushed.
-                    updated_at:
-                      type: string
-                      format: date-time
-                      description: The date and time when the repository was last updated.
-  /github/pulls:
-    get:
-      operationId: getPullRequests
-      tags:
-        - Git Hub Resource
-      summary: Retrieve pull requests for a specific repository.
-      parameters:
-        - name: owner
-          in: query
-          required: true
-          description: The user who owns the repository.
-          schema:
-            type: string
-          example: openjdk
-        - name: repo
-          in: query
-          required: true
-          description: The name of the repository.
-          schema:
-            type: string
-          example: jmc
-        - name: state
-          in: query
-          description: "Filter pulls by their state. Can be either `open`, `closed`, or `all`."
-          schema:
-            type: string
-            enum:
-              - open
-              - closed
-              - all
-          example: open
-        - name: sort
-          in: query
-          description: "Sorts the results of the pulls. Can be `created`, `updated`, `popularity`, or `long-running`."
-          schema:
-            type: string
-            enum:
-              - created
-              - updated
-              - popularity
-              - long-running
-          example: created
-        - name: direction
-          in: query
-          description: "The direction of the sort. Can be either `asc` or `desc`."
-          schema:
-            type: string
-            enum:
-              - asc
-              - desc
-          example: desc
-        - name: maxresults
-          in: query
-          description: "The maximum number of results. Defaults to -1 which means as many as we can get. Tips: to get the oldest PR, set maxresults to 1, set sort to created and set the sort order to asc. To get the newest, set the sort order to desc."
-          schema:
-            type: integer
-            minimum: -1
-            example: 10
-      responses:
-        "200":
-          description: A list of pull requests for the specified repository.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    state:
-                      type: string
-                      description: The state of the pull request (e.g., open, closed).
-                    number:
-                      type: integer
-                      description: The pull request number.
-                    title:
-                      type: string
-                      description: The title of the pull request.
-                    created_at:
-                      type: string
-                      format: date-time
-                      description: The date and time when the pull request was created.
-                    updated_at:
-                      type: string
-                      format: date-time
-                      description: The date and time when the pull request was last updated.
-                    body:
-                      type: string
-                      description: The body or description of the pull request.
-                    user:
-                      type: string
-                      description: The username of the pull request's author.
-  /version:
-    get:
-      operationId: getVersion
-      tags:
-        - Version Resource
-      summary: Retrieve API version
-      description: Returns the current version of the API.
-      responses:
-        "200":
-          description: The current version of the API
-          content:
-            text/plain:
-              schema:
-                type: string
+{
+  "openapi": "3.1.0",
+  "paths": {
+    "/census/groups": {
+      "get": {
+        "operationId": "getGroups",
+        "parameters": [
+          {
+            "description": "Lists the group for the groupid, or all if not provided.",
+            "example": "vulnerability",
+            "name": "groupid",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/getGroupsResponse"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get Groups",
+        "tags": [
+          "Census Resource"
+        ]
+      }
+    },
+    "/census/groups/search": {
+      "get": {
+        "operationId": "searchGroups",
+        "parameters": [
+          {
+            "description": "Search query for groups using a regular expression. Searches both groupid and group names.",
+            "example": ".*uln.*",
+            "name": "query",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/searchGroupsResponse"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Search Groups",
+        "tags": [
+          "Census Resource"
+        ]
+      }
+    },
+    "/census/people": {
+      "get": {
+        "operationId": "getPeople",
+        "parameters": [
+          {
+            "description": "Lists the person(s) with the specified userid(s). Multiple IDs can be provided as a comma-separated list (e.g., 'hirt,duke,iris'). If no userid is provided, returns all people in OpenJDK.",
+            "example": "hirt,duke",
+            "name": "userid",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/getPeopleResponse"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get People",
+        "tags": [
+          "Census Resource"
+        ]
+      }
+    },
+    "/census/people/search": {
+      "get": {
+        "operationId": "searchPeople",
+        "parameters": [
+          {
+            "description": "Search query for people using a regular expression. Searches through both userid and full names.",
+            "example": ".*Hirt",
+            "name": "query",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/searchPeopleResponse"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Search People",
+        "tags": [
+          "Census Resource"
+        ]
+      }
+    },
+    "/census/projects": {
+      "get": {
+        "operationId": "getProjects",
+        "parameters": [
+          {
+            "description": "Lists the project for the projectid, or all projects if not provided.",
+            "example": "jmc",
+            "name": "projectid",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/getProjectsResponse"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get Projects",
+        "tags": [
+          "Census Resource"
+        ]
+      }
+    },
+    "/census/projects/search": {
+      "get": {
+        "operationId": "searchProjects",
+        "parameters": [
+          {
+            "description": "Search query for projects using a regular expression. Searches both projectid and project names.",
+            "example": ".*Mission.*",
+            "name": "query",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/searchProjectsResponse"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Search Projects",
+        "tags": [
+          "Census Resource"
+        ]
+      }
+    },
+    "/census/projects/{projectid}/members": {
+      "get": {
+        "operationId": "getProjectMembers",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "projectid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "roles",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/getProjectMembersResponse"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get Project Members",
+        "tags": [
+          "Census Resource"
+        ]
+      }
+    },
+    "/census/status": {
+      "get": {
+        "operationId": "getStatus",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/getStatusResponse"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get Status",
+        "tags": [
+          "Census Resource"
+        ]
+      }
+    },
+    "/contribution/build-guidance": {
+      "get": {
+        "operationId": "buildGuidance",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ref",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "repo",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "test",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "topic",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/buildGuidanceResponse"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Build Guidance",
+        "tags": [
+          "Contribution Resource"
+        ]
+      }
+    },
+    "/contribution/context": {
+      "get": {
+        "operationId": "context",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ref",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "repo",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/contextResponse"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Context",
+        "tags": [
+          "Contribution Resource"
+        ]
+      }
+    },
+    "/github/activity": {
+      "get": {
+        "operationId": "getProjectActivity",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "openjdk"
+            }
+          },
+          {
+            "description": "Pages of 100 integrated pull requests to scan, 1 to 3; defaults to 1",
+            "name": "pages",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "description": "Repository name",
+            "example": "jmc",
+            "required": true,
+            "name": "repo",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Start date (inclusive), YYYY-MM-DD",
+            "example": "2026-07-01",
+            "required": true,
+            "name": "since",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "End date (inclusive), YYYY-MM-DD; defaults to today",
+            "name": "until",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/getProjectActivityResponse"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get Project Activity",
+        "tags": [
+          "Git Hub Resource"
+        ]
+      }
+    },
+    "/github/backports": {
+      "get": {
+        "operationId": "getBackportStatus",
+        "parameters": [
+          {
+            "description": "Original commit SHA, at least seven hexadecimal digits",
+            "required": true,
+            "name": "commit",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Search page size per target, 1 to 100; defaults to 30",
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "owner",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "openjdk"
+            }
+          },
+          {
+            "description": "Original repository",
+            "example": "jdk",
+            "required": true,
+            "name": "repo",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Up to five comma-separated owner/repo or owner/repo@branch targets",
+            "example": "openjdk/jdk21u,openjdk/jdk17u@master",
+            "required": true,
+            "name": "targets",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/getBackportStatusResponse"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get Backport Status",
+        "tags": [
+          "Git Hub Resource"
+        ]
+      }
+    },
+    "/github/contributor": {
+      "get": {
+        "operationId": "getContributorRecord",
+        "parameters": [
+          {
+            "description": "Examples to list from each end, 1 to 50; defaults to 10",
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "description": "GitHub login of the contributor",
+            "example": "thegreystone",
+            "required": true,
+            "name": "login",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "owner",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "openjdk"
+            }
+          },
+          {
+            "description": "Repository name",
+            "example": "jmc",
+            "required": true,
+            "name": "repo",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/getContributorRecordResponse"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get Contributor Record",
+        "tags": [
+          "Git Hub Resource"
+        ]
+      }
+    },
+    "/github/pulls": {
+      "get": {
+        "operationId": "getPullRequests",
+        "parameters": [
+          {
+            "description": "The sort order, [asc|desc]",
+            "example": "desc",
+            "name": "direction",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "desc"
+            }
+          },
+          {
+            "description": "Upstream page size, 1 to 100; defaults to 30. Legacy -1 selects 100. Author filtering applies within the page; follow X-Next-Page even for an empty result.",
+            "example": 30,
+            "name": "maxresults",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 30
+            }
+          },
+          {
+            "description": "The owner of the repository",
+            "example": "openjdk",
+            "required": true,
+            "name": "owner",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Page number; defaults to 1",
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "description": "The name of the repository",
+            "example": "jmc",
+            "required": true,
+            "name": "repo",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "In what order to get the results, [created|updated|popularity|long-running]",
+            "example": "created",
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "created"
+            }
+          },
+          {
+            "description": "The state of the PRs to list, [open|closed|all]",
+            "example": "open",
+            "name": "state",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "open"
+            }
+          },
+          {
+            "description": "The user opening the PR (optional)",
+            "example": "thegreystone",
+            "name": "user",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/getPullRequestsResponse"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get Pull Requests",
+        "tags": [
+          "Git Hub Resource"
+        ]
+      }
+    },
+    "/github/repos": {
+      "get": {
+        "operationId": "getRepositories",
+        "parameters": [
+          {
+            "description": "Items per page, 1 to 100; defaults to 30",
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "description": "Page number; defaults to 1. Follow X-Next-Page when X-Has-More is true",
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "description": "The user for which to list the repositories.",
+            "example": "thegreystone",
+            "name": "user",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/getRepositoriesResponse"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get Repositories",
+        "tags": [
+          "Git Hub Resource"
+        ]
+      }
+    },
+    "/github/review": {
+      "get": {
+        "operationId": "getReviewContext",
+        "parameters": [
+          {
+            "description": "Pull request number",
+            "required": true,
+            "name": "number",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "owner",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "openjdk"
+            }
+          },
+          {
+            "description": "Repository name",
+            "example": "jdk",
+            "required": true,
+            "name": "repo",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/getReviewContextResponse"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get Review Context",
+        "tags": [
+          "Git Hub Resource"
+        ]
+      }
+    },
+    "/github/triage": {
+      "get": {
+        "operationId": "getPullRequestTriage",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "openjdk"
+            }
+          },
+          {
+            "description": "Pages of 100 open pull requests to scan, 1 to 3; defaults to 1",
+            "name": "pages",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "description": "Repository name",
+            "example": "jmc",
+            "required": true,
+            "name": "repo",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Idle days after which a pull request is stale, 1 to 365; defaults to 30",
+            "name": "staleDays",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/getPullRequestTriageResponse"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get Pull Request Triage",
+        "tags": [
+          "Git Hub Resource"
+        ]
+      }
+    },
+    "/guide/search": {
+      "get": {
+        "summary": "Search the OpenJDK Developers' Guide for verbatim section excerpts",
+        "operationId": "searchDevelopersGuide",
+        "parameters": [
+          {
+            "description": "Maximum sections to return, 1 to 20; defaults to 5",
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "description": "Case-insensitive literal text; omit for the table of contents",
+            "example": "backport",
+            "name": "query",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/searchDevelopersGuideResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Developers Guide Resource"
+        ]
+      }
+    },
+    "/issues/search": {
+      "get": {
+        "operationId": "searchIssues",
+        "parameters": [
+          {
+            "description": "Assignee username, or unassigned",
+            "name": "assignee",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Exact component, for example hotspot",
+            "name": "component",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Exact fix version, for example 26 or 17.0.22",
+            "name": "fixVersion",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "description": "Exact priority, for example P2",
+            "name": "priority",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "JDK, JMC, CODETOOLS or SKARA",
+            "name": "project",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Literal text phrase",
+            "name": "query",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Exact resolution such as Fixed, or unresolved",
+            "name": "resolution",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Resolved on or after this date, YYYY-MM-DD",
+            "name": "resolvedSince",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Exact status, for example Open",
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Exact issue type, for example Bug, Enhancement, CSR, JEP or Backport",
+            "name": "type",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Updated on or after this date, YYYY-MM-DD",
+            "name": "updatedSince",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/searchIssuesResponse"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Search Issues",
+        "tags": [
+          "Issue Resource"
+        ]
+      }
+    },
+    "/issues/{key}": {
+      "get": {
+        "operationId": "getIssue",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/getIssueResponse"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get Issue",
+        "tags": [
+          "Issue Resource"
+        ]
+      }
+    },
+    "/issues/{key}/fix-status": {
+      "get": {
+        "operationId": "getIssueFixStatus",
+        "parameters": [
+          {
+            "description": "Main issue key, for example JDK-8394772",
+            "example": "JDK-8394772",
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/getIssueFixStatusResponse"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get Issue Fix Status",
+        "tags": [
+          "Issue Resource"
+        ]
+      }
+    },
+    "/jeps/search": {
+      "get": {
+        "operationId": "searchJeps",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "release",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/searchJepsResponse"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Search Jeps",
+        "tags": [
+          "Jep Resource"
+        ]
+      }
+    },
+    "/jeps/{number}": {
+      "get": {
+        "operationId": "getJep",
+        "parameters": [
+          {
+            "name": "number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/getJepResponse"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get Jep",
+        "tags": [
+          "Jep Resource"
+        ]
+      }
+    },
+    "/mail/threads": {
+      "get": {
+        "summary": "List or search one month of an OpenJDK mailing list archive",
+        "operationId": "searchThreads",
+        "parameters": [
+          {
+            "description": "Page size, 1 to 100; defaults to 30",
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "description": "Mailing list name",
+            "example": "jmc-dev",
+            "required": true,
+            "name": "list",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Archive month as YYYY-MM or YYYY-MonthName; defaults to the newest archived month",
+            "example": "2026-02",
+            "name": "month",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Zero-based result offset; defaults to 0",
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "description": "Case-insensitive literal text matched against subjects and authors",
+            "name": "query",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/searchThreadsResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Mailing List Resource"
+        ]
+      }
+    },
+    "/processes": {
+      "get": {
+        "summary": "Summarize OpenJDK project processes with authoritative links",
+        "operationId": "getProjectProcesses",
+        "parameters": [
+          {
+            "description": "Optional census project ID, for example jmc or jdk-updates",
+            "name": "projectid",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Optional topic filter, for example committer, csr, jep, backports or lead",
+            "name": "topic",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/getProjectProcessesResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Project Process Resource"
+        ]
+      }
+    },
+    "/releases/jdk/{release}": {
+      "get": {
+        "summary": "Get a JDK feature release's schedule, current phase and targeted JEPs",
+        "operationId": "getReleaseSchedule",
+        "parameters": [
+          {
+            "description": "Feature release number, for example 26",
+            "name": "release",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/getReleaseScheduleResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Release Resource"
+        ]
+      }
+    },
+    "/version": {
+      "get": {
+        "operationId": "getVersion",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get Version",
+        "tags": [
+          "Version Resource"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "openjdk-helper API",
+    "version": "0.2.0-SNAPSHOT"
+  },
+  "servers": [
+    {
+      "url": "https://api.hirt.se/openjdk"
+    }
+  ],
+  "components": {
+    "schemas": {
+      "buildGuidanceResponse": {
+        "type": "object",
+        "properties": {
+          "documents": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "available": {
+                  "type": "boolean"
+                },
+                "cached": {
+                  "type": "boolean"
+                },
+                "completeDocument": {
+                  "type": "boolean"
+                },
+                "excerptCharacterLimit": {
+                  "type": "integer"
+                },
+                "excerpts": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "clipped": {
+                        "type": "boolean"
+                      },
+                      "endLine": {
+                        "type": "integer"
+                      },
+                      "startLine": {
+                        "type": "integer"
+                      },
+                      "text": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": true
+                  }
+                },
+                "fetchedAt": {
+                  "type": "string"
+                },
+                "matched": {
+                  "type": "boolean"
+                },
+                "path": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "integer"
+                },
+                "url": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": true
+            }
+          },
+          "guidanceSemantics": {
+            "type": "string"
+          },
+          "owner": {
+            "type": "string"
+          },
+          "ref": {
+            "type": "string"
+          },
+          "repo": {
+            "type": "string"
+          },
+          "repositoryUrl": {
+            "type": "string"
+          },
+          "test": {
+            "type": "string"
+          },
+          "topic": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      },
+      "contextResponse": {
+        "type": "object",
+        "properties": {
+          "censusMembers": {
+            "type": "object",
+            "properties": {
+              "censusUrl": {
+                "type": "string"
+              },
+              "hasMore": {
+                "type": "boolean"
+              },
+              "limit": {
+                "type": "integer"
+              },
+              "metadata": {
+                "type": "object",
+                "properties": {
+                  "available": {
+                    "type": "boolean"
+                  },
+                  "format": {
+                    "type": "string"
+                  },
+                  "lastRefreshAttempt": {
+                    "type": "string"
+                  },
+                  "lastRefreshFailed": {
+                    "type": "boolean"
+                  },
+                  "lastSuccessfulRefresh": {
+                    "type": "string"
+                  },
+                  "sourceTime": {
+                    "type": "string"
+                  },
+                  "sourceUrl": {
+                    "type": "string"
+                  },
+                  "stale": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": true
+              },
+              "offset": {
+                "type": "integer"
+              },
+              "projectId": {
+                "type": "string"
+              },
+              "projectName": {
+                "type": "string"
+              },
+              "query": {},
+              "results": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "censusUrl": {
+                      "type": "string"
+                    },
+                    "fullName": {
+                      "type": "string"
+                    },
+                    "role": {
+                      "type": "string"
+                    },
+                    "userId": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              },
+              "roleSemantics": {
+                "type": "string"
+              },
+              "roles": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "total": {
+                "type": "integer"
+              }
+            },
+            "additionalProperties": true
+          },
+          "censusStatus": {
+            "type": "integer"
+          },
+          "censusUrl": {
+            "type": "string"
+          },
+          "checks": {
+            "type": "object",
+            "properties": {
+              "error": {
+                "type": "string"
+              },
+              "warning": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          },
+          "committerRules": {
+            "type": "object",
+            "properties": {
+              "role": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          },
+          "jbsProject": {
+            "type": "string"
+          },
+          "memberSemantics": {
+            "type": "string"
+          },
+          "owner": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "ref": {
+            "type": "string"
+          },
+          "repo": {
+            "type": "string"
+          },
+          "repositoryUrl": {
+            "type": "string"
+          },
+          "reviewRules": {
+            "type": "object",
+            "properties": {
+              "ignore": {
+                "type": "string"
+              },
+              "reviewers": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          },
+          "ruleSemantics": {
+            "type": "string"
+          },
+          "source": {
+            "type": "object",
+            "properties": {
+              "cached": {
+                "type": "boolean"
+              },
+              "fetchedAt": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string"
+              },
+              "status": {
+                "type": "integer"
+              },
+              "url": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          },
+          "version": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      },
+      "getBackportStatusResponse": {
+        "type": "object",
+        "properties": {
+          "interpretation": {
+            "type": "string"
+          },
+          "issues": {
+            "type": "array",
+            "items": {}
+          },
+          "searchLimit": {
+            "type": "integer"
+          },
+          "source": {
+            "type": "object",
+            "properties": {
+              "cached": {
+                "type": "boolean"
+              },
+              "fetchedAt": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          },
+          "sourceCommit": {
+            "type": "object",
+            "properties": {
+              "commit": {
+                "type": "object",
+                "properties": {
+                  "author": {
+                    "type": "object",
+                    "properties": {
+                      "date": {
+                        "type": "string"
+                      },
+                      "email": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": true
+                  },
+                  "comment_count": {
+                    "type": "integer"
+                  },
+                  "committer": {
+                    "type": "object",
+                    "properties": {
+                      "date": {
+                        "type": "string"
+                      },
+                      "email": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": true
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "tree": {
+                    "type": "object",
+                    "properties": {
+                      "sha": {
+                        "type": "string"
+                      },
+                      "url": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": true
+                  },
+                  "url": {
+                    "type": "string"
+                  },
+                  "verification": {
+                    "type": "object",
+                    "properties": {
+                      "payload": {},
+                      "reason": {
+                        "type": "string"
+                      },
+                      "signature": {},
+                      "verified": {
+                        "type": "boolean"
+                      },
+                      "verified_at": {}
+                    },
+                    "additionalProperties": true
+                  }
+                },
+                "additionalProperties": true
+              },
+              "html_url": {
+                "type": "string"
+              },
+              "sha": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          },
+          "sourceRepository": {
+            "type": "string"
+          },
+          "targets": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "branch": {
+                  "type": "string"
+                },
+                "evidence": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string"
+                      },
+                      "sha": {
+                        "type": "string"
+                      },
+                      "url": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": true
+                  }
+                },
+                "partial": {
+                  "type": "boolean"
+                },
+                "problems": {
+                  "type": "array",
+                  "items": {}
+                },
+                "repository": {
+                  "type": "string"
+                },
+                "sources": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "cached": {
+                        "type": "boolean"
+                      },
+                      "fetchedAt": {
+                        "type": "string"
+                      },
+                      "url": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": true
+                  }
+                },
+                "status": {
+                  "type": "string"
+                },
+                "targetHeadSha": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": true
+            }
+          }
+        },
+        "additionalProperties": true
+      },
+      "getContributorRecordResponse": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "getGroupsResponse": {
+        "type": "object",
+        "properties": {
+          "groupid": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "available": {
+                "type": "boolean"
+              },
+              "format": {
+                "type": "string"
+              },
+              "lastRefreshAttempt": {
+                "type": "string"
+              },
+              "lastRefreshFailed": {
+                "type": "boolean"
+              },
+              "lastSuccessfulRefresh": {
+                "type": "string"
+              },
+              "sourceTime": {
+                "type": "string"
+              },
+              "sourceUrl": {
+                "type": "string"
+              },
+              "stale": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": true
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "members": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "role": {
+                        "type": "string"
+                      },
+                      "userId": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": true
+                  }
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": true
+            }
+          }
+        },
+        "additionalProperties": true
+      },
+      "getIssueFixStatusResponse": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "getIssueResponse": {
+        "type": "object",
+        "properties": {
+          "cached": {
+            "type": "boolean"
+          },
+          "fetchedAt": {
+            "type": "string"
+          },
+          "issue": {
+            "type": "object",
+            "properties": {
+              "affectedVersions": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "components": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "created": {
+                "type": "string"
+              },
+              "fixVersions": {
+                "type": "array",
+                "items": {}
+              },
+              "key": {
+                "type": "string"
+              },
+              "labels": {
+                "type": "array",
+                "items": {}
+              },
+              "priority": {
+                "type": "string"
+              },
+              "relatedIssues": {
+                "type": "array",
+                "items": {}
+              },
+              "status": {
+                "type": "string"
+              },
+              "summary": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string"
+              },
+              "updated": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          },
+          "source": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      },
+      "getJepResponse": {
+        "type": "object",
+        "properties": {
+          "cached": {
+            "type": "boolean"
+          },
+          "fetchedAt": {
+            "type": "string"
+          },
+          "jep": {
+            "type": "object",
+            "properties": {
+              "component": {
+                "type": "string"
+              },
+              "created": {
+                "type": "string"
+              },
+              "discussion": {
+                "type": "string"
+              },
+              "duration": {
+                "type": "string"
+              },
+              "effort": {
+                "type": "string"
+              },
+              "links": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "label": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              },
+              "number": {
+                "type": "integer"
+              },
+              "owner": {
+                "type": "string"
+              },
+              "release": {
+                "type": "string"
+              },
+              "scope": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              },
+              "summary": {
+                "type": "string"
+              },
+              "summaryTruncated": {
+                "type": "boolean"
+              },
+              "title": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string"
+              },
+              "updated": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          },
+          "source": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      },
+      "getPeopleResponse": {
+        "type": "object",
+        "properties": {
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "available": {
+                "type": "boolean"
+              },
+              "format": {
+                "type": "string"
+              },
+              "lastRefreshAttempt": {
+                "type": "string"
+              },
+              "lastRefreshFailed": {
+                "type": "boolean"
+              },
+              "lastSuccessfulRefresh": {
+                "type": "string"
+              },
+              "sourceTime": {
+                "type": "string"
+              },
+              "sourceUrl": {
+                "type": "string"
+              },
+              "stale": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": true
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "affiliations": {
+                  "type": "object",
+                  "properties": {
+                    "groups": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "role": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      }
+                    },
+                    "projects": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "role": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      }
+                    }
+                  },
+                  "additionalProperties": true
+                },
+                "fullName": {
+                  "type": "string"
+                },
+                "userId": {
+                  "type": "string"
+                },
+                "organization": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": true
+            }
+          },
+          "userid": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      },
+      "getProjectActivityResponse": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "getProjectMembersResponse": {
+        "type": "object",
+        "properties": {
+          "censusUrl": {
+            "type": "string"
+          },
+          "hasMore": {
+            "type": "boolean"
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "available": {
+                "type": "boolean"
+              },
+              "format": {
+                "type": "string"
+              },
+              "lastRefreshAttempt": {
+                "type": "string"
+              },
+              "lastRefreshFailed": {
+                "type": "boolean"
+              },
+              "lastSuccessfulRefresh": {
+                "type": "string"
+              },
+              "sourceTime": {
+                "type": "string"
+              },
+              "sourceUrl": {
+                "type": "string"
+              },
+              "stale": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": true
+          },
+          "offset": {
+            "type": "integer"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "projectName": {
+            "type": "string"
+          },
+          "query": {},
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "censusUrl": {
+                  "type": "string"
+                },
+                "fullName": {
+                  "type": "string"
+                },
+                "role": {
+                  "type": "string"
+                },
+                "userId": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": true
+            }
+          },
+          "roleSemantics": {
+            "type": "string"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "total": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": true
+      },
+      "getProjectProcessesResponse": {
+        "type": "object",
+        "properties": {
+          "censusMetadata": {
+            "type": "object",
+            "properties": {
+              "available": {
+                "type": "boolean"
+              },
+              "format": {
+                "type": "string"
+              },
+              "lastRefreshAttempt": {
+                "type": "string"
+              },
+              "lastRefreshFailed": {
+                "type": "boolean"
+              },
+              "lastSuccessfulRefresh": {
+                "type": "string"
+              },
+              "sourceTime": {
+                "type": "string"
+              },
+              "sourceUrl": {
+                "type": "string"
+              },
+              "stale": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": true
+          },
+          "project": {
+            "type": "object",
+            "properties": {
+              "censusUrl": {
+                "type": "string"
+              },
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          },
+          "projectContext": {
+            "type": "string"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "appliesTo": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "string"
+                },
+                "links": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "title": {
+                        "type": "string"
+                      },
+                      "url": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": true
+                  }
+                },
+                "steps": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "summary": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": true
+            }
+          },
+          "reviewedOn": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "topics": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": true
+      },
+      "getProjectsResponse": {
+        "type": "object",
+        "properties": {
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "available": {
+                "type": "boolean"
+              },
+              "format": {
+                "type": "string"
+              },
+              "lastRefreshAttempt": {
+                "type": "string"
+              },
+              "lastRefreshFailed": {
+                "type": "boolean"
+              },
+              "lastSuccessfulRefresh": {
+                "type": "string"
+              },
+              "sourceTime": {
+                "type": "string"
+              },
+              "sourceUrl": {
+                "type": "string"
+              },
+              "stale": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": true
+          },
+          "projectid": {
+            "type": "string"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "members": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "role": {
+                        "type": "string"
+                      },
+                      "userId": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": true
+                  }
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": true
+            }
+          }
+        },
+        "additionalProperties": true
+      },
+      "getPullRequestTriageResponse": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "getPullRequestsResponse": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "base": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "ref": {
+                  "type": "string"
+                },
+                "sha": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": true
+            },
+            "body": {
+              "type": "string"
+            },
+            "closed_at": {},
+            "created_at": {
+              "type": "string"
+            },
+            "draft": {
+              "type": "boolean"
+            },
+            "head": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "ref": {
+                  "type": "string"
+                },
+                "sha": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": true
+            },
+            "html_url": {
+              "type": "string"
+            },
+            "labels": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "archived_at": {},
+                  "archived_by": {},
+                  "color": {
+                    "type": "string"
+                  },
+                  "default": {
+                    "type": "boolean"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "integer"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "node_id": {
+                    "type": "string"
+                  },
+                  "url": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": true
+              }
+            },
+            "merged_at": {},
+            "number": {
+              "type": "integer"
+            },
+            "requested_reviewers": {
+              "type": "array",
+              "items": {}
+            },
+            "state": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "updated_at": {
+              "type": "string"
+            },
+            "user": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "getReleaseScheduleResponse": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "getRepositoriesResponse": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "archived": {
+              "type": "boolean"
+            },
+            "created_at": {
+              "type": "string"
+            },
+            "default_branch": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            },
+            "fork": {
+              "type": "boolean"
+            },
+            "full_name": {
+              "type": "string"
+            },
+            "html_url": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "pushed_at": {
+              "type": "string"
+            },
+            "stars": {
+              "type": "integer"
+            },
+            "updated_at": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "getReviewContextResponse": {
+        "type": "object",
+        "properties": {
+          "assessment": {
+            "type": "string"
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "completed_at": {
+                  "type": "string"
+                },
+                "conclusion": {
+                  "type": "string"
+                },
+                "details_url": {
+                  "type": "string"
+                },
+                "head_sha": {
+                  "type": "string"
+                },
+                "html_url": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "output": {
+                  "type": "object",
+                  "properties": {
+                    "annotations_count": {
+                      "type": "integer"
+                    },
+                    "annotations_url": {
+                      "type": "string"
+                    },
+                    "summary": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "text": {},
+                    "title": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "additionalProperties": true
+                },
+                "started_at": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": true
+            }
+          },
+          "commitStatus": {
+            "type": "object",
+            "properties": {
+              "sha": {
+                "type": "string"
+              },
+              "state": {
+                "type": "string"
+              },
+              "statuses": {
+                "type": "array",
+                "items": {}
+              },
+              "total_count": {
+                "type": "integer"
+              }
+            },
+            "additionalProperties": true
+          },
+          "headSha": {
+            "type": "string"
+          },
+          "integrationReadiness": {
+            "type": "string"
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": true
+            }
+          },
+          "problems": {
+            "type": "array",
+            "items": {}
+          },
+          "pullRequest": {
+            "type": "object",
+            "properties": {
+              "base": {
+                "type": "object",
+                "properties": {
+                  "label": {
+                    "type": "string"
+                  },
+                  "ref": {
+                    "type": "string"
+                  },
+                  "sha": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": true
+              },
+              "body": {
+                "type": "string"
+              },
+              "closed_at": {},
+              "created_at": {
+                "type": "string"
+              },
+              "draft": {
+                "type": "boolean"
+              },
+              "head": {
+                "type": "object",
+                "properties": {
+                  "label": {
+                    "type": "string"
+                  },
+                  "ref": {
+                    "type": "string"
+                  },
+                  "sha": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": true
+              },
+              "html_url": {
+                "type": "string"
+              },
+              "labels": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "archived_at": {},
+                    "archived_by": {},
+                    "color": {
+                      "type": "string"
+                    },
+                    "default": {
+                      "type": "boolean"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "integer"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "node_id": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              },
+              "mergeable": {
+                "type": "boolean"
+              },
+              "merged": {
+                "type": "boolean"
+              },
+              "merged_at": {},
+              "number": {
+                "type": "integer"
+              },
+              "requested_reviewers": {
+                "type": "array",
+                "items": {}
+              },
+              "state": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "updated_at": {
+                "type": "string"
+              },
+              "user": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          },
+          "repository": {
+            "type": "string"
+          },
+          "reviews": {
+            "type": "array",
+            "items": {}
+          },
+          "skaraSections": {
+            "type": "object",
+            "properties": {
+              "Issue": {
+                "type": "string"
+              },
+              "Progress": {
+                "type": "string"
+              },
+              "Reviewing": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "cached": {
+                  "type": "boolean"
+                },
+                "fetchedAt": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": true
+            }
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      },
+      "getStatusResponse": {
+        "type": "object",
+        "properties": {
+          "available": {
+            "type": "boolean"
+          },
+          "format": {
+            "type": "string"
+          },
+          "lastRefreshAttempt": {
+            "type": "string"
+          },
+          "lastRefreshFailed": {
+            "type": "boolean"
+          },
+          "lastSuccessfulRefresh": {
+            "type": "string"
+          },
+          "sourceTime": {
+            "type": "string"
+          },
+          "sourceUrl": {
+            "type": "string"
+          },
+          "stale": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": true
+      },
+      "searchDevelopersGuideResponse": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "searchGroupsResponse": {
+        "type": "object",
+        "properties": {
+          "groupid": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "available": {
+                "type": "boolean"
+              },
+              "format": {
+                "type": "string"
+              },
+              "lastRefreshAttempt": {
+                "type": "string"
+              },
+              "lastRefreshFailed": {
+                "type": "boolean"
+              },
+              "lastSuccessfulRefresh": {
+                "type": "string"
+              },
+              "sourceTime": {
+                "type": "string"
+              },
+              "sourceUrl": {
+                "type": "string"
+              },
+              "stale": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": true
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "members": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "role": {
+                        "type": "string"
+                      },
+                      "userId": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": true
+                  }
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": true
+            }
+          },
+          "query": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      },
+      "searchIssuesResponse": {
+        "type": "object",
+        "properties": {
+          "cached": {
+            "type": "boolean"
+          },
+          "fetchedAt": {
+            "type": "string"
+          },
+          "hasMore": {
+            "type": "boolean"
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "offset": {
+            "type": "integer"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "affectedVersions": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "assignee": {
+                  "type": "string"
+                },
+                "components": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "created": {
+                  "type": "string"
+                },
+                "fixVersions": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "key": {
+                  "type": "string"
+                },
+                "labels": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "priority": {
+                  "type": "string"
+                },
+                "relatedIssues": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "key": {
+                        "type": "string"
+                      },
+                      "linkType": {
+                        "type": "string"
+                      },
+                      "relationship": {
+                        "type": "string"
+                      },
+                      "status": {
+                        "type": "string"
+                      },
+                      "summary": {
+                        "type": "string"
+                      },
+                      "type": {
+                        "type": "string"
+                      },
+                      "url": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": true
+                  }
+                },
+                "resolution": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string"
+                },
+                "summary": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                },
+                "updated": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": true
+            }
+          },
+          "source": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "total": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": true
+      },
+      "searchJepsResponse": {
+        "type": "object",
+        "properties": {
+          "cached": {
+            "type": "boolean"
+          },
+          "fetchedAt": {
+            "type": "string"
+          },
+          "hasMore": {
+            "type": "boolean"
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "offset": {
+            "type": "integer"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "number": {
+                  "type": "integer"
+                },
+                "release": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": true
+            }
+          },
+          "source": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "total": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": true
+      },
+      "searchPeopleResponse": {
+        "type": "object",
+        "properties": {
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "available": {
+                "type": "boolean"
+              },
+              "format": {
+                "type": "string"
+              },
+              "lastRefreshAttempt": {
+                "type": "string"
+              },
+              "lastRefreshFailed": {
+                "type": "boolean"
+              },
+              "lastSuccessfulRefresh": {
+                "type": "string"
+              },
+              "sourceTime": {
+                "type": "string"
+              },
+              "sourceUrl": {
+                "type": "string"
+              },
+              "stale": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": true
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "affiliations": {
+                  "type": "object",
+                  "properties": {
+                    "groups": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "role": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      }
+                    },
+                    "projects": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "role": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      }
+                    }
+                  },
+                  "additionalProperties": true
+                },
+                "fullName": {
+                  "type": "string"
+                },
+                "userId": {
+                  "type": "string"
+                },
+                "organization": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": true
+            }
+          },
+          "userid": {
+            "type": "string"
+          },
+          "query": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      },
+      "searchProjectsResponse": {
+        "type": "object",
+        "properties": {
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "available": {
+                "type": "boolean"
+              },
+              "format": {
+                "type": "string"
+              },
+              "lastRefreshAttempt": {
+                "type": "string"
+              },
+              "lastRefreshFailed": {
+                "type": "boolean"
+              },
+              "lastSuccessfulRefresh": {
+                "type": "string"
+              },
+              "sourceTime": {
+                "type": "string"
+              },
+              "sourceUrl": {
+                "type": "string"
+              },
+              "stale": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": true
+          },
+          "projectid": {
+            "type": "string"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "members": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "role": {
+                        "type": "string"
+                      },
+                      "userId": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": true
+                  }
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": true
+            }
+          },
+          "query": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      },
+      "searchThreadsResponse": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    }
+  }
+}

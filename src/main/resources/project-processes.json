@@ -1,0 +1,66 @@
+{
+  "reviewedOn": "2026-10-21",
+  "scope": "Curated summaries of OpenJDK processes. Follow the linked governing documents and the target project's current rules; these summaries do not grant approval or perform administrative actions.",
+  "processes": [
+    {
+      "id": "lead-responsibilities", "title": "Project Lead responsibilities", "appliesTo": "OpenJDK Project Leads",
+      "summary": "Coordinate technical direction, maintain project infrastructure and publish a quarterly activity report. The lead appoints Authors and designates repositories requiring formal review.",
+      "steps": ["Keep contact details, mailing lists, web content and repositories current.", "Publish recent activity each quarter; getProjectActivity summarizes integrated changes, authors and first-time contributors for the period, and getPullRequestTriage shows what is waiting.", "Delegate obligations to Committers as appropriate; full authority can only be delegated temporarily."],
+      "links": [{"title": "Bylaws: Project Lead", "url": "https://openjdk.org/bylaws#project-lead"}]
+    },
+    {
+      "id": "author", "title": "Appoint an Author", "appliesTo": "OpenJDK Projects",
+      "summary": "A contributor requests Author status from the Project Lead with references to at least two sponsored contributions. Author status still requires a sponsor for integration.",
+      "steps": ["Collect the contribution references and assess continued involvement; getContributorRecord lists the contributor's integrated pull requests.", "The lead notifies the registrar; registration and the census update follow."],
+      "links": [{"title": "Author appointment and registration", "url": "https://openjdk.org/projects/"}]
+    },
+    {
+      "id": "committer", "title": "Elect a Committer", "appliesTo": "OpenJDK Projects",
+      "summary": "A project Committer nominates a contributor. Current project Committers vote by Lazy Consensus: no unresolved vetoes. Prior Author status is not mandatory.",
+      "steps": ["Check the nominee's record with getContributorRecord and the project's own significance criteria.", "Publish qualifications and a two-week deadline on the project list; searchMailingList finds CFV and Result threads.", "Announce the result there and notify the registrar on approval."],
+      "links": [{"title": "Committer nomination and voting", "url": "https://openjdk.org/projects/#committer-vote"}, {"title": "Bylaws: Committer", "url": "https://openjdk.org/bylaws#committer"}]
+    },
+    {
+      "id": "reviewer", "title": "Elect a Reviewer", "appliesTo": "Projects requiring formal review",
+      "summary": "A project Reviewer nominates a project Committer. Current Reviewers use Three-Vote Consensus: no vetoes and three Yes votes, or unanimity with fewer eligible voters.",
+      "steps": ["Check the nominee's record with getContributorRecord and the project's own criteria.", "Publish qualifications and a two-week deadline on the project list; searchMailingList finds CFV and Result threads.", "Announce the result and notify the registrar on approval."],
+      "links": [{"title": "Reviewer nomination and voting", "url": "https://openjdk.org/projects/#reviewer-vote"}, {"title": "Bylaws: Reviewer", "url": "https://openjdk.org/bylaws#reviewer"}]
+    },
+    {
+      "id": "voting", "title": "Run and close a vote", "appliesTo": "OpenJDK governance votes",
+      "summary": "Identify the electorate and voting rule before opening a vote. Votes are public; only each voter's latest vote counts. Vetoes require justification.",
+      "steps": ["Use the process-specific notice and deadline, normally two weeks; searchMailingList locates the CFV thread and replies, but vote tallies must be read from the messages.", "Resolve vetoes and announce the tally and outcome; early consensus completion requires every eligible voter to vote Yes."],
+      "links": [{"title": "Bylaws: voting rules", "url": "https://openjdk.org/bylaws#voting"}, {"title": "Operational election instructions", "url": "https://openjdk.org/projects/"}]
+    },
+    {
+      "id": "lead-succession", "title": "Change the Project Lead", "appliesTo": "Project Lead vacancies",
+      "summary": "Sponsoring Group Leads nominate and select a successor using Three-Vote Consensus. If they cannot agree, the OpenJDK Lead selects a nominee.",
+      "steps": ["Coordinate succession with the sponsoring Group Leads.", "Consult the bylaws for exceptional removal and appeal procedures."],
+      "links": [{"title": "Bylaws: leadership and succession", "url": "https://openjdk.org/bylaws#project-lead"}]
+    },
+    {
+      "id": "review-and-integration", "title": "Review, sponsor and integrate a change", "appliesTo": "Repositories using Skara",
+      "summary": "Use the target branch's contribution rules, issue tracker and tests. Check the latest PR revision, Skara progress and required reviews before requesting integration.",
+      "steps": ["Use getContributionContext and getBuildGuidance for the selected repository and ref.", "Use getOpenJdkReview to inspect checks, reviews with Skara roles, blockers and issue links; getPullRequestTriage groups a repository's open pull requests.", "The author requests /integrate; a contributor without commit rights needs an eligible Committer to /sponsor. Skara pushes the commit and closes the pull request with the integrated label."],
+      "links": [{"title": "Skara pull request commands", "url": "https://wiki.openjdk.org/display/SKARA/Pull+Request+Commands"}, {"title": "OpenJDK Developers' Guide", "url": "https://openjdk.org/guide/"}]
+    },
+    {
+      "id": "csr", "title": "Compatibility and Specification Review", "appliesTo": "JDK exported interfaces and significant compatibility changes",
+      "summary": "Assess CSR needs early for interface, specification or broad behavioral changes. A source review or JEP does not replace CSR approval.",
+      "steps": ["Draft the CSR with the compatibility impact and proposed specification; obtain review from an engineer familiar with the area. searchIssues with type CSR lists pending requests.", "For the one-phase process, the assignee finalizes the request for CSR review and approval.", "For early feedback use Proposed, then CSR Provisional review, followed by Finalized and Approved; Provisional is not final approval."],
+      "links": [{"title": "CSR scope and workflows", "url": "https://wiki.openjdk.org/display/csr/Main"}]
+    },
+    {
+      "id": "jep", "title": "Propose and deliver a JEP", "appliesTo": "JDK features and significant infrastructure or process changes",
+      "summary": "Build agreement on a JEP, record the proposal in JBS and distinguish roadmap candidacy from targeting a release. JEP 1 links to the revised JEP 2.0 workflow.",
+      "steps": ["Draft, review and endorse the proposal, then submit it for candidacy.", "Document an engineering plan before proposing a target release; getReleaseSchedule shows the release's rampdown dates, and the Project Lead decides targeting after evaluating the plan and consensus.", "Track implementation, tests and documentation through Integrated and Complete; the Project Lead marks delivery when the release ships."],
+      "links": [{"title": "JEP 1: scope and process", "url": "https://openjdk.org/jeps/1"}, {"title": "Revised JEP workflow referenced by JEP 1", "url": "https://cr.openjdk.org/~mr/jep/jep-2.0-02.html"}, {"title": "JEP template", "url": "https://openjdk.org/jeps/2"}]
+    },
+    {
+      "id": "backports", "title": "Backport a fix", "appliesTo": "Updates and other target repositories",
+      "summary": "Track the original commit and the exact target repository and branch. Review and approval requirements vary by updates project and release phase.",
+      "steps": ["Check existing backport evidence with getIssueFixStatus (JBS fix versions) and getBackportStatus (commit provenance).", "Create a Skara backport PR from the original commit; explain adaptations and test the target branch.", "Follow target-specific review and maintainer approval rules before integration; a clean application alone does not establish approval."],
+      "links": [{"title": "Skara backport workflow", "url": "https://wiki.openjdk.org/display/skara/backports"}, {"title": "JDK Updates project and release-specific guidance", "url": "https://openjdk.org/projects/jdk-updates/"}]
+    }
+  ]
+}

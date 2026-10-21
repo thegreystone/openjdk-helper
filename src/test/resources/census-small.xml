@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Deterministic OpenJDK census fixture using the published census.xml schema. -->
+<census time="2026-10-20T15:14:43Z">
+  <person name="hirt"><full-name>Marcus Hirt</full-name><org>Example Organization</org></person>
+  <person name="aptmac"><full-name>Alex Macdonald</full-name></person>
+  <person name="alice"><full-name>Alice Åström</full-name></person>
+  <person name="bravo"><full-name>Ben Committer</full-name></person>
+  <person name="clara"><full-name>Clara Author</full-name></person>
+  <person name="horii"><full-name>Hiroshi Horii</full-name></person>
+  <person name="hiroshi"><full-name>Hiroshi Yamauchi</full-name></person>
+  <person name="unaffiliated"><full-name>Una Affiliated</full-name></person>
+  <group name="vulnerability">
+    <full-name>Vulnerability</full-name>
+    <person ref="hirt"/>
+    <person ref="alice" role="lead"/>
+  </group>
+  <project name="jmc">
+    <full-name>JDK Mission Control</full-name><sponsor ref="vulnerability"/>
+    <person ref="hirt" role="lead"/>
+    <person ref="aptmac" role="reviewer"/>
+    <person ref="alice" role="reviewer"/>
+    <person ref="bravo" role="committer"/>
+    <person ref="clara" role="author"/>
+  </project>
+  <project name="jdk-updates">
+    <full-name>JDK Updates</full-name><sponsor ref="vulnerability"/>
+    <person ref="alice" role="reviewer"/><person ref="bravo" role="committer"/>
+  </project>
+  <project name="openjfx">
+    <full-name>OpenJFX</full-name><sponsor ref="vulnerability"/>
+    <person ref="aptmac" role="reviewer"/>
+  </project>
+  <project name="jdk">
+    <full-name>JDK</full-name><sponsor ref="vulnerability"/>
+    <person ref="horii" role="author"/><person ref="hiroshi" role="author"/>
+  </project>
+</census>

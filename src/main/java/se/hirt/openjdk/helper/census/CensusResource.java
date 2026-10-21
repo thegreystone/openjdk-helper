@@ -33,6 +33,7 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
@@ -41,6 +42,22 @@ import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 public class CensusResource {
 	@Inject
 	CensusService censusService;
+
+	@GET
+	@Path("/status")
+	@Produces(MediaType.APPLICATION_JSON)
+	public java.util.Map<String, Object> getStatus() {
+		return censusService.getCensusStatus();
+	}
+
+	@GET
+	@Path("/projects/{projectid}/members")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getProjectMembers(@PathParam("projectid") String projectId,
+			@QueryParam("roles") String roles, @QueryParam("query") String query,
+			@QueryParam("limit") Integer limit, @QueryParam("offset") Integer offset) {
+		return censusService.getProjectMembers(projectId, roles, query, limit, offset);
+	}
 
 	@GET
 	@Path("/people")

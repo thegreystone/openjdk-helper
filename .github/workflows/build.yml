@@ -1,0 +1,88 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Make mvnw executable
+        run: chmod +x ./mvnw
+
+      - name: Build and test
+        run: ./mvnw -B clean verify
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: quarkus-app
+          path: target/quarkus-app
+          if-no-files-found: error
+          retention-days: 14
+
+  native:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up GraalVM 25
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '25'
+          distribution: 'graalvm'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          cache: maven
+
+      - name: Set up Node.js for MCP bundles
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: mcpb/package-lock.json
+
+      - name: Install bundle tools
+        run: npm ci --prefix mcpb --ignore-scripts
+
+      - name: Build and test native executable
+        run: |
+          chmod +x ./mvnw
+          ./mvnw -B verify -Dnative -Dquarkus.native.container-build=false
+
+      - name: Package and test MCP bundle
+        run: |
+          VERSION="$(./mvnw -q help:evaluate -Dexpression=project.version -DforceStdout)"
+          node mcpb/pack.mjs "$VERSION" linux-x86_64 "target/openjdk-helper-${VERSION}-runner"
+          node mcpb/test-mcpb.mjs "target/openjdk-helper-${VERSION}-linux-x86_64.mcpb"
+
+      - name: Upload MCP bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcpb-linux-x86_64
+          path: target/openjdk-helper-*-linux-x86_64.mcpb
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload native test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-test-reports
+          path: target/failsafe-reports
+          retention-days: 14

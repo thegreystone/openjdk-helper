@@ -1,0 +1,4 @@
+{"startAt":0,"maxResults":50,"total":2,"issues":[
+ {"key":"JDK-8394124","fields":{"summary":"Fixture issue","status":{"name":"Resolved"},"resolution":{"name":"Fixed"},"issuetype":{"name":"Backport"},"fixVersions":[{"name":"17.0.22"}],"versions":[],"updated":"2026-09-02T10:00:00.000+0000","resolutiondate":"2026-09-02T10:00:00.000+0000"}},
+ {"key":"JDK-8394911","fields":{"summary":"Fixture issue","status":{"name":"Open"},"resolution":null,"issuetype":{"name":"Backport"},"fixVersions":[{"name":"11.0.34"}],"versions":[],"updated":"2026-09-03T10:00:00.000+0000"}}
+]}

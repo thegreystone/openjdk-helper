@@ -31,7 +31,7 @@
  */
 package se.hirt.openjdk.helper;
 
-import io.quarkus.test.junit.QuarkusTest;
+import jakarta.ws.rs.ServiceUnavailableException;
 import org.junit.jupiter.api.Test;
 import se.hirt.openjdk.helper.census.*;
 
@@ -44,7 +44,6 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@QuarkusTest
 public class CensusScraperTest {
 
 	@Test
@@ -53,7 +52,6 @@ public class CensusScraperTest {
 		OpenjdkCensusScraper scraper = new OpenjdkCensusScraper(html);
 		Set<String> users = scraper.getUserIds();
 		assertNotNull(users);
-		System.out.println(users);
 		assertEquals(1231, users.size());
 	}
 
@@ -79,7 +77,6 @@ public class CensusScraperTest {
 		OpenjdkCensusScraper scraper = new OpenjdkCensusScraper(html);
 		Map<String, Project> projects = scraper.getProjects();
 		assertNotNull(projects);
-		System.out.println(projects);
 		assertEquals(78, projects.size());
 	}
 
@@ -89,7 +86,6 @@ public class CensusScraperTest {
 		OpenjdkCensusScraper scraper = new OpenjdkCensusScraper(html);
 		Map<String, Group> groups = scraper.getGroups();
 		assertNotNull(groups);
-		System.out.println(groups);
 		assertEquals(20, groups.size());
 	}
 
@@ -113,11 +109,33 @@ public class CensusScraperTest {
 	}
 
 	@Test
-	public void testLiveScraper() throws IOException {
-		OpenjdkCensusScraper scraper = new OpenjdkCensusScraper(new CensusRetriever(), 1000);
-		Set<Person> people = scraper.findPeople("Hir.*");
-		assertEquals(3, people.size());
-		scraper.shutdown();
+	public void testUnavailableCensusHasServiceUnavailableStatus() {
+		CensusRetriever retriever = new CensusRetriever() {
+			@Override
+			public String retrieveCensusContent() throws IOException {
+				throw new IOException("Simulated upstream outage");
+			}
+		};
+		OpenjdkCensusScraper scraper = new OpenjdkCensusScraper(retriever, 3600);
+		try {
+			ServiceUnavailableException failure = assertThrows(ServiceUnavailableException.class, scraper::getPeople);
+			assertEquals(503, failure.getResponse().getStatus());
+		} finally {
+			scraper.shutdown();
+			retriever.close();
+		}
+	}
+
+	@Test
+	public void testInvalidCensusIsNotAcceptedAsEmptyData() {
+		assertThrows(IllegalArgumentException.class, () -> new OpenjdkCensusScraper("<html>Upstream unavailable</html>"));
+	}
+
+	@Test
+	public void testProjectRolesAreParsed() throws IOException {
+		OpenjdkCensusScraper scraper = new OpenjdkCensusScraper(getHtml());
+		assertEquals("Lead", scraper.getProjects().get("jmc").getMembers().get("hirt"));
+		assertEquals("Member", scraper.getGroups().get("vulnerability").getMembers().get("hirt"));
 	}
 
 	private String getHtml() throws IOException {

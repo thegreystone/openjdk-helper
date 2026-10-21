@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Marcus Hirt
+ * Copyright (C) 2024-2026 Marcus Hirt
  *
  * This software is free:
  *
@@ -28,222 +28,93 @@
  */
 package se.hirt.openjdk.helper.mcp;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.quarkiverse.mcp.server.TextContent;
 import io.quarkiverse.mcp.server.Tool;
+import io.quarkiverse.mcp.server.Tool.Annotations;
 import io.quarkiverse.mcp.server.ToolArg;
 import io.quarkiverse.mcp.server.ToolResponse;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.core.Response;
-import org.jboss.logging.Logger;
-import se.hirt.openjdk.helper.census.CensusService;
+
 import se.hirt.openjdk.helper.core.OpenJDKHelperService;
-import se.hirt.openjdk.helper.github.GitHubService;
+import se.hirt.openjdk.helper.common.ToolResults;
 
-import java.util.List;
 
-/**
- * MCP Tools for OpenJDK Helper using the official Quarkiverse MCP Server extension.
- */
+
+/** The same read-only operations are available through REST and both MCP transports. */
 @ApplicationScoped
 public class OpenJDKHelperTools {
-	private static final Logger LOG = Logger.getLogger(OpenJDKHelperTools.class);
-	private static final ObjectMapper objectMapper = new ObjectMapper();
-
 	@Inject
 	OpenJDKHelperService helperService;
 
-	/**
-	 * Get the version of the OpenJDK Helper service.
-	 */
-	@Tool(description = "Get the version of the OpenJDK Helper service.")
+	@Inject
+	ToolResults results;
+
+	@Tool(description = "Get the version of the OpenJDK Helper service.",
+			annotations = @Annotations(readOnlyHint = true, destructiveHint = false, idempotentHint = true, openWorldHint = false))
 	public ToolResponse getVersion() {
-		LOG.info("MCP tool: Getting version information");
 		return ToolResponse.success(new TextContent(helperService.getVersion()));
 	}
 
-	/**
-	 * Search for people in the OpenJDK census.
-	 */
-	@Tool(description = "Search for people in the OpenJDK census by name or username.")
+	@Tool(description = "Search the OpenJDK census by a regular expression matching a person's name or username.",
+			annotations = @Annotations(readOnlyHint = true, destructiveHint = false, idempotentHint = true))
 	public ToolResponse searchPeople(
-			@ToolArg(description = "The search query, such as a name or username") String query) {
-		try {
-			LOG.info("MCP tool: Searching for people matching: " + query);
-			CensusService censusService = helperService.getCensusService();
-			Response response = censusService.searchPeople(query);
-
-			if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-				LOG.error("Error searching people: " + response.getEntity().toString());
-				return new ToolResponse(true, List.of(new TextContent("Error searching people: " + response.getEntity().toString())));
-			}
-
-			return ToolResponse.success(new TextContent(response.getEntity().toString()));
-		} catch (Exception e) {
-			LOG.error("Error in searchPeople", e);
-			return new ToolResponse(true, List.of(new TextContent("Error searching people: " + e.getMessage())));
-		}
+			@ToolArg(description = "Name or username search expression, for example Hirt or Hir.*") String query) {
+		return results.call(() -> helperService.getCensusService().searchPeople(query));
 	}
 
-	/**
-	 * Get person(s) from the OpenJDK census by their ID(s).
-	 */
-	@Tool(description = "Get information about one or more people in the OpenJDK census by their IDs.")
+	@Tool(description = "Get information about one or more people in the OpenJDK census by their IDs.",
+			annotations = @Annotations(readOnlyHint = true, destructiveHint = false, idempotentHint = true))
 	public ToolResponse getPerson(
 			@ToolArg(description = "The person's ID or username, or a comma-separated list of IDs") String userid) {
-		try {
-			LOG.info("MCP tool: Getting person(s) with ID(s): " + userid);
-			CensusService censusService = helperService.getCensusService();
-			Response response = censusService.getPeople(userid);
-
-			if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-				LOG.error("Error fetching person(s): " + response.getEntity().toString());
-				return new ToolResponse(true, List.of(new TextContent("Error fetching person(s): " + response.getEntity().toString())));
-			}
-
-			return ToolResponse.success(new TextContent(response.getEntity().toString()));
-		} catch (Exception e) {
-			LOG.error("Error in getPerson", e);
-			return new ToolResponse(true, List.of(new TextContent("Error fetching person(s): " + e.getMessage())));
-		}
+		return results.call(() -> helperService.getCensusService().getPeople(userid));
 	}
 
-	/**
-	 * Search for projects in the OpenJDK census.
-	 */
-	@Tool(description = "Search for projects in the OpenJDK census.")
+	@Tool(description = "Search OpenJDK census projects using a regular expression.",
+			annotations = @Annotations(readOnlyHint = true, destructiveHint = false, idempotentHint = true))
 	public ToolResponse searchProjects(
-			@ToolArg(description = "The search query for projects") String query) {
-		try {
-			LOG.info("MCP tool: Searching for projects matching: " + query);
-			CensusService censusService = helperService.getCensusService();
-			Response response = censusService.searchProjects(query);
-
-			if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-				LOG.error("Error searching projects: " + response.getEntity().toString());
-				return new ToolResponse(true, List.of(new TextContent("Error searching projects: " + response.getEntity().toString())));
-			}
-
-			return ToolResponse.success(new TextContent(response.getEntity().toString()));
-		} catch (Exception e) {
-			LOG.error("Error in searchProjects", e);
-			return new ToolResponse(true, List.of(new TextContent("Error searching projects: " + e.getMessage())));
-		}
+			@ToolArg(description = "The search expression for projects") String query) {
+		return results.call(() -> helperService.getCensusService().searchProjects(query));
 	}
 
-	/**
-	 * Get a project from the OpenJDK census by its ID.
-	 */
-	@Tool(description = "Get information about a project in the OpenJDK census by its ID.")
-	public ToolResponse getProject(
-			@ToolArg(description = "The project ID") String projectid) {
-		try {
-			LOG.info("MCP tool: Getting project with ID: " + projectid);
-			CensusService censusService = helperService.getCensusService();
-			Response response = censusService.getProjects(projectid);
-
-			if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-				LOG.error("Error fetching project: " + response.getEntity().toString());
-				return new ToolResponse(true, List.of(new TextContent("Error fetching project: " + response.getEntity().toString())));
-			}
-
-			return ToolResponse.success(new TextContent(response.getEntity().toString()));
-		} catch (Exception e) {
-			LOG.error("Error in getProject", e);
-			return new ToolResponse(true, List.of(new TextContent("Error fetching project: " + e.getMessage())));
-		}
+	@Tool(description = "Get information about a project in the OpenJDK census by its ID.",
+			annotations = @Annotations(readOnlyHint = true, destructiveHint = false, idempotentHint = true))
+	public ToolResponse getProject(@ToolArg(description = "The project ID") String projectid) {
+		return results.call(() -> helperService.getCensusService().getProjects(projectid));
 	}
 
-	/**
-	 * Search for groups in the OpenJDK census.
-	 */
-	@Tool(description = "Search for groups in the OpenJDK census.")
-	public ToolResponse searchGroups(
-			@ToolArg(description = "The search query for groups") String query) {
-		try {
-			LOG.info("MCP tool: Searching for groups matching: " + query);
-			CensusService censusService = helperService.getCensusService();
-			Response response = censusService.searchGroups(query);
-
-			if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-				LOG.error("Error searching groups: " + response.getEntity().toString());
-				return new ToolResponse(true, List.of(new TextContent("Error searching groups: " + response.getEntity().toString())));
-			}
-
-			return ToolResponse.success(new TextContent(response.getEntity().toString()));
-		} catch (Exception e) {
-			LOG.error("Error in searchGroups", e);
-			return new ToolResponse(true, List.of(new TextContent("Error searching groups: " + e.getMessage())));
-		}
+	@Tool(description = "Search OpenJDK census groups using a regular expression.",
+			annotations = @Annotations(readOnlyHint = true, destructiveHint = false, idempotentHint = true))
+	public ToolResponse searchGroups(@ToolArg(description = "The search expression for groups") String query) {
+		return results.call(() -> helperService.getCensusService().searchGroups(query));
 	}
 
-	/**
-	 * Get a group from the OpenJDK census by its ID.
-	 */
-	@Tool(description = "Get information about a group in the OpenJDK census by its ID.")
-	public ToolResponse getGroup(
-			@ToolArg(description = "The group ID") String groupid) {
-		try {
-			LOG.info("MCP tool: Getting group with ID: " + groupid);
-			CensusService censusService = helperService.getCensusService();
-			Response response = censusService.getGroups(groupid);
-
-			if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-				LOG.error("Error fetching group: " + response.getEntity().toString());
-				return new ToolResponse(true, List.of(new TextContent("Error fetching group: " + response.getEntity().toString())));
-			}
-
-			return ToolResponse.success(new TextContent(response.getEntity().toString()));
-		} catch (Exception e) {
-			LOG.error("Error in getGroup", e);
-			return new ToolResponse(true, List.of(new TextContent("Error fetching group: " + e.getMessage())));
-		}
+	@Tool(description = "Get information about a group in the OpenJDK census by its ID.",
+			annotations = @Annotations(readOnlyHint = true, destructiveHint = false, idempotentHint = true))
+	public ToolResponse getGroup(@ToolArg(description = "The group ID") String groupid) {
+		return results.call(() -> helperService.getCensusService().getGroups(groupid));
 	}
 
-	/**
-	 * Get GitHub repositories for a user.
-	 */
-	@Tool(description = "Get GitHub repositories for a user.")
+	@Tool(description = "Get public GitHub repositories for a user.",
+			annotations = @Annotations(readOnlyHint = true, destructiveHint = false, idempotentHint = true))
 	public ToolResponse getGitHubRepos(
-			@ToolArg(description = "The GitHub username") String user) {
-		try {
-			LOG.info("MCP tool: Fetching repositories for user: " + user);
-			GitHubService gitHubService = helperService.getGitHubService();
-			Response response = gitHubService.getRepositories(user);
-
-			if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-				LOG.error("Error fetching repositories: " + response.getEntity().toString());
-				return new ToolResponse(true, List.of(new TextContent("Error fetching repositories: " + response.getEntity().toString())));
-			}
-
-			return ToolResponse.success(new TextContent(response.getEntity().toString()));
-		} catch (Exception e) {
-			LOG.error("Error in getGitHubRepos", e);
-			return new ToolResponse(true, List.of(new TextContent("Error fetching repositories: " + e.getMessage())));
-		}
+			@ToolArg(description = "The GitHub username or organization") String user,
+			@ToolArg(description = "Page size, 1 to 100; default 30", required = false) Integer limit,
+			@ToolArg(description = "Page number starting at 1", required = false) Integer page) {
+		return results.call(() -> helperService.getGitHubService().listRepositories(user, limit, page));
 	}
 
-	/**
-	 * Get pull requests for a repository.
-	 */
-	@Tool(description = "Get pull requests for a GitHub repository.")
+	@Tool(description = "List GitHub pull requests with bounded pagination and optional author, state and sort filters. Defaults to open requests.",
+			annotations = @Annotations(readOnlyHint = true, destructiveHint = false, idempotentHint = true))
 	public ToolResponse getGitHubPulls(
-			@ToolArg(description = "The repository owner") String owner, @ToolArg(description = "The repository name") String repo) {
-		try {
-			LOG.info("MCP tool: Fetching pull requests for repo: " + owner + "/" + repo);
-			GitHubService gitHubService = helperService.getGitHubService();
-			Response response = gitHubService.getPullRequests(owner, repo, null, null, null, null, -1);
-
-			if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-				LOG.error("Error fetching pull requests: " + response.getEntity().toString());
-				return new ToolResponse(true, List.of(new TextContent("Error fetching pull requests: " + response.getEntity().toString())));
-			}
-
-			return ToolResponse.success(new TextContent(response.getEntity().toString()));
-		} catch (Exception e) {
-			LOG.error("Error in getGitHubPulls", e);
-			return new ToolResponse(true, List.of(new TextContent("Error fetching pull requests: " + e.getMessage())));
-		}
+			@ToolArg(description = "The repository owner") String owner,
+			@ToolArg(description = "The repository name") String repo,
+			@ToolArg(description = "Optional GitHub author username", required = false) String user,
+			@ToolArg(description = "open, closed or all; default open", required = false) String state,
+			@ToolArg(description = "created, updated, popularity or long-running; default created", required = false) String sort,
+			@ToolArg(description = "asc or desc; default desc", required = false) String direction,
+			@ToolArg(description = "Page size, 1 to 100; default 30", required = false) Integer limit,
+			@ToolArg(description = "Upstream page number starting at 1; inspect hasMore/nextPage when filtering authors", required = false) Integer page) {
+		return results.call(() -> helperService.getGitHubService().listPullRequests(owner, repo, user, state, sort, direction, limit, page));
 	}
 }

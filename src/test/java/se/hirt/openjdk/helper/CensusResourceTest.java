@@ -29,6 +29,7 @@
 package se.hirt.openjdk.helper;
 
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.common.QuarkusTestResource;
 import org.junit.jupiter.api.Test;
 
 import static io.restassured.RestAssured.given;
@@ -36,6 +37,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.*;
 
 @QuarkusTest
+@QuarkusTestResource(CensusTestResource.class)
 public class CensusResourceTest {
 
 	@Test
@@ -101,5 +103,60 @@ public class CensusResourceTest {
 	public void testGetMultiplePersonsAllNotFound() {
 		given().when().get("/census/people?userid=idontexist1,idontexist2").then().statusCode(404)
 				.body("error", is("Could not find any people with the provided userids: idontexist1,idontexist2"));
+	}
+
+	@Test
+	public void testInvalidSearchPatternsReturnBadRequest() {
+		for (String collection : new String[] {"people", "groups", "projects"}) {
+			given().queryParam("query", "[").when().get("/census/" + collection + "/search")
+					.then().statusCode(400).body("error", startsWith("Invalid regular expression:"));
+		}
+	}
+
+	@Test
+	public void testNotFoundErrorIsValidJsonForQuotedInput() {
+		given().queryParam("userid", "missing\"user").when().get("/census/people")
+				.then().statusCode(404).body("error", is("Could not find person with userid missing\"user"));
+	}
+
+	@Test
+	public void testProjectAndGroupDetails() {
+		given().queryParam("projectid", "jmc").when().get("/census/projects")
+				.then().statusCode(200).body("results[0].name", is("JDK Mission Control Project"))
+				.body("results[0].members.find { it.userId == 'hirt' }.role", is("Lead"));
+		given().queryParam("groupid", "vulnerability").when().get("/census/groups")
+				.then().statusCode(200).body("results[0].name", is("Vulnerability Group"))
+				.body("results[0].members.find { it.userId == 'hirt' }.role", is("Member"));
+	}
+
+	@Test
+	public void testBoundedExactRoleMembershipAndLiteralSearch() {
+		given().queryParam("roles", "ReVieWer").queryParam("limit", 1).when().get("/census/projects/jmc/members")
+				.then().statusCode(200).body("total", is(2)).body("hasMore", is(true))
+				.body("results", hasSize(1)).body("results[0].userId", is("alice"))
+				.body("results[0].role", is("Reviewer")).body("metadata.format", is("xml"));
+		given().queryParam("roles", "reviewer").queryParam("limit", 1).queryParam("offset", 1)
+				.when().get("/census/projects/jmc/members").then().statusCode(200)
+				.body("results[0].userId", is("aptmac")).body("hasMore", is(false));
+		given().queryParam("query", "ÅSTRÖM").when().get("/census/projects/jmc/members")
+				.then().statusCode(200).body("results", hasSize(1)).body("results[0].userId", is("alice"));
+		given().queryParam("query", ".*").when().get("/census/projects/jmc/members")
+				.then().statusCode(200).body("results", hasSize(0));
+	}
+
+	@Test
+	public void testMembersValidateBoundsAndUnknownRoles() {
+		given().queryParam("limit", 101).when().get("/census/projects/jmc/members").then().statusCode(400);
+		given().queryParam("offset", -1).when().get("/census/projects/jmc/members").then().statusCode(400);
+		given().queryParam("roles", "expert").when().get("/census/projects/jmc/members").then().statusCode(400);
+		given().when().get("/census/projects/unknown/members").then().statusCode(404);
+	}
+
+	@Test
+	public void testCensusMetadata() {
+		given().when().get("/census/status").then().statusCode(200)
+				.body("available", is(true)).body("stale", is(false)).body("format", is("xml"))
+				.body("sourceTime", is("2026-10-20T15:14:43Z")).body("lastSuccessfulRefresh", notNullValue())
+				.body("sourceUrl", startsWith("http://127.0.0.1:"));
 	}
 }

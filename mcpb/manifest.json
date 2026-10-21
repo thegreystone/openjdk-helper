@@ -1,0 +1,67 @@
+{
+  "manifest_version": "0.3",
+  "name": "openjdk-helper",
+  "display_name": "OpenJDK Helper",
+  "version": "__VERSION__",
+  "description": "Explore OpenJDK contributors, JBS issues, JEPs, reviews, backports and contribution processes.",
+  "long_description": "Twenty-seven read-only tools provide census memberships and freshness, JBS issue search with structured filters, fix-status across backports, JEP lookup and search, JDK release schedules, GitHub repositories and pull requests, Skara review evidence with reviewer roles, pull request triage, contributor records, activity summaries, commit-based backport searches, mailing list archive search, Developers' Guide excerpts, repository contribution/build guidance, and project-lead processes with governing sources. The server runs locally over stdio without a Java installation. Public OpenJDK and GitHub access requires no account; optional tokens can be configured where supported. JBS access restrictions are reported explicitly, and access depends on upstream policy.",
+  "author": {
+    "name": "Marcus Hirt",
+    "url": "https://www.hirt.se"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thegreystone/openjdk-helper"
+  },
+  "homepage": "https://github.com/thegreystone/openjdk-helper",
+  "documentation": "https://github.com/thegreystone/openjdk-helper/blob/main/README.md",
+  "support": "https://github.com/thegreystone/openjdk-helper/issues",
+  "license": "BSD-3-Clause",
+  "keywords": ["openjdk", "java", "census", "contributors", "github", "jbs", "jep", "reviews", "backports", "releases", "mailing-lists", "project-lead"],
+  "server": {
+    "type": "binary",
+    "entry_point": "server/openjdk-helper",
+    "mcp_config": {
+      "command": "${__dirname}/server/openjdk-helper",
+      "args": [
+        "-Dquarkus.profile=stdio",
+        "-Dquarkus.config.locations=.",
+        "-Duser.dir=${__dirname}"
+      ]
+    }
+  },
+  "tools": [
+    {"name": "getVersion", "description": "Get the running OpenJDK Helper version."},
+    {"name": "searchPeople", "description": "Search contributors in the OpenJDK census."},
+    {"name": "getPerson", "description": "Get a contributor's census entry and memberships."},
+    {"name": "searchProjects", "description": "Search OpenJDK census projects."},
+    {"name": "getProject", "description": "Get an OpenJDK census project."},
+    {"name": "searchGroups", "description": "Search OpenJDK census groups."},
+    {"name": "getGroup", "description": "Get an OpenJDK census group."},
+    {"name": "getProjectMembers", "description": "Page project members by exact census role and optional name filter."},
+    {"name": "getCensusStatus", "description": "Inspect census source, publication, refresh and stale status."},
+    {"name": "getGitHubRepos", "description": "Page public repositories for a GitHub organization."},
+    {"name": "getGitHubPulls", "description": "Page repository pull requests with descriptions, labels and provenance."},
+    {"name": "getOpenJdkReview", "description": "Inspect Skara progress, reviews, checks and JBS links for a pull request."},
+    {"name": "getBackportStatus", "description": "Find bounded commit-provenance evidence in selected update repositories."},
+    {"name": "getPullRequestTriage", "description": "Group open pull requests by Skara state: ready, awaiting review, blocked, CSR, conflicts, stale, drafts."},
+    {"name": "getContributorRecord", "description": "Count a contributor's integrated, open and abandoned pull requests for nominations."},
+    {"name": "getProjectActivity", "description": "Summarize integrated pull requests, authors and first-time contributors in a period."},
+    {"name": "getIssue", "description": "Read a JBS issue, versions and linked CSR/backport issues; report access failures."},
+    {"name": "getIssueFixStatus", "description": "List every linked backport with fix versions, summarized as fixedIn and pendingIn releases."},
+    {"name": "searchIssues", "description": "Search JBS by literal text with exact project, status, type, version, component, priority, assignee, resolution and date filters."},
+    {"name": "getJep", "description": "Read a published JEP's metadata, source links and bounded summary."},
+    {"name": "searchJeps", "description": "Search the official JEP index by title, number, status and release."},
+    {"name": "getContributionContext", "description": "Resolve repository contribution rules and census role candidates from source evidence."},
+    {"name": "getBuildGuidance", "description": "Read repository build/test documentation excerpts and optional ProblemList matches."},
+    {"name": "getProjectProcesses", "description": "Summarize project-lead duties, appointments, elections and contribution processes with governing links."},
+    {"name": "getReleaseSchedule", "description": "Read a JDK release's milestones, current phase, next milestone and targeted JEPs."},
+    {"name": "searchMailingList", "description": "List or search one month of an OpenJDK mailing list archive, classifying votes and review requests."},
+    {"name": "searchDevelopersGuide", "description": "Get verbatim section excerpts from the OpenJDK Developers' Guide."}
+  ],
+  "tools_generated": true,
+  "prompts_generated": false,
+  "compatibility": {
+    "platforms": ["__PLATFORM__"]
+  }
+}

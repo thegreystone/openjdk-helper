@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Marcus Hirt
+ * Copyright (C) 2024-2026 Marcus Hirt
  *
  * This software is free:
  *
@@ -29,35 +29,29 @@
 package se.hirt.openjdk.helper.mcp;
 
 import io.quarkus.runtime.StartupEvent;
-import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
-import jakarta.inject.Inject;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
-/**
- * MCP Server configuration observer to ensure the MCP server is properly initialized.
- */
+/** Reports the configured transports; tool registration is handled by the MCP extension. */
 @ApplicationScoped
-@RegisterForReflection
 public class McpServerConfig {
-
 	private static final Logger LOG = Logger.getLogger(McpServerConfig.class);
 
-	@Inject
-	OpenJDKHelperTools helperTools;
+	@ConfigProperty(name = "quarkus.mcp.server.http.root-path", defaultValue = "/mcp")
+	String rootPath;
 
-	void onStart(@Observes StartupEvent ev) {
-		LOG.info("MCP Server starting up...");
-		LOG.info("MCP Tools registered: " + (helperTools != null ? "Yes" : "No"));
-		LOG.info("OpenJDK Helper Tools class: " + (helperTools != null ? helperTools.getClass().getName() : "Not available"));
+	@ConfigProperty(name = "quarkus.mcp.server.stdio.enabled", defaultValue = "false")
+	boolean stdioEnabled;
 
-		// Transport options
-		LOG.info("MCP SSE endpoint available at: /mcp/sse");
-		LOG.info("MCP stdio " + (Boolean.getBoolean("quarkus.mcp.server.stdio.enabled") ? "enabled" : "disabled"));
+	@ConfigProperty(name = "quarkus.http.host-enabled", defaultValue = "true")
+	boolean httpEnabled;
 
-		// Connection instructions
-		LOG.info("MCP Inspector SSE connection: npx @modelcontextprotocol/inspector http://localhost:8080/mcp --transport-type=sse");
-		LOG.info("For stdio mode, restart with: java -Dquarkus.mcp.server.stdio.enabled=true -jar target/quarkus-app/quarkus-run.jar");
+	void onStart(@Observes StartupEvent event) {
+		if (httpEnabled) {
+			LOG.infof("MCP Streamable HTTP: %s; legacy SSE: %s/sse", rootPath, rootPath);
+		}
+		LOG.infof("MCP stdio %s", stdioEnabled ? "enabled" : "disabled");
 	}
 }

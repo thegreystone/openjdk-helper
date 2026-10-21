@@ -33,14 +33,21 @@ package se.hirt.openjdk.helper.census;
 
 import io.quarkus.logging.Log;
 import io.quarkus.runtime.Startup;
+import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.ServiceUnavailableException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.parser.Parser;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -53,7 +60,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
- * Generates Slogans.
+ * Caches the OpenJDK census and refreshes it periodically.
  */
 @Startup
 @ApplicationScoped
@@ -62,6 +69,12 @@ public class OpenjdkCensusScraper {
 	private volatile Map<String, Group> groups;
 	private volatile Map<String, Project> projects;
 	private volatile Map<String, Person> people;
+	private Instant sourceTime;
+	private Instant lastSuccessfulRefresh;
+	private Instant lastRefreshAttempt;
+	private boolean lastRefreshFailed;
+	private String format;
+	private final int refreshIntervalInSeconds;
 	private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
 	private final CensusRetriever censusRetriever;
@@ -75,21 +88,9 @@ public class OpenjdkCensusScraper {
 		Log.info("Scraper Instantiated with a " + refreshIntervalInSeconds + " second interval refresh");
 		// Immediately download and initialize.
 		this.censusRetriever = censusRetriever;
-		try {
-			String html = censusRetriever.retrieveCensusContent();
-			initialize(html);
-		} catch (IOException | InterruptedException e) {
-			Log.error(e);
-		}
-
-		scheduler.scheduleAtFixedRate(() -> {
-			try {
-				String html = censusRetriever.retrieveCensusContent();
-				initialize(html);
-			} catch (IOException | InterruptedException e) {
-				Log.error(e);
-			}
-		}, refreshIntervalInSeconds, refreshIntervalInSeconds, TimeUnit.SECONDS);
+		this.refreshIntervalInSeconds = refreshIntervalInSeconds;
+		refresh();
+		scheduler.scheduleWithFixedDelay(this::refresh, refreshIntervalInSeconds, refreshIntervalInSeconds, TimeUnit.SECONDS);
 	}
 
 	/**
@@ -99,23 +100,107 @@ public class OpenjdkCensusScraper {
 	 * 		the HTML to use when testing.
 	 */
 	public OpenjdkCensusScraper(String html) {
-		censusRetriever = new CensusRetriever();
+		censusRetriever = null;
+		refreshIntervalInSeconds = 3600;
 		initialize(html);
 	}
 
-	private void initialize(String html) {
-		Document doc = Jsoup.parse(html);
+	void refresh() {
+		synchronized (this) {
+			lastRefreshAttempt = Instant.now();
+		}
+		try {
+			initialize(censusRetriever.retrieveCensusContent());
+		} catch (InterruptedException e) {
+			markRefreshFailed();
+			Thread.currentThread().interrupt();
+			Log.warn("Census refresh interrupted", e);
+		} catch (IOException | RuntimeException e) {
+			markRefreshFailed();
+			// Keep the last valid snapshot, and allow the next scheduled refresh to retry.
+			Log.error("Could not refresh the OpenJDK census", e);
+		}
+	}
 
-		Set<String> newUserIds = extractUserIds(doc);
-		Map<String, Group> newGroups = extractGroups(doc);
-		Map<String, Project> newProjects = extractProjects(doc);
-		Map<String, Person> newPeople = extractPeople(doc, newGroups, newProjects);
+	private synchronized void markRefreshFailed() {
+		lastRefreshFailed = true;
+	}
+
+	private void initialize(String content) {
+		boolean xml = content.stripLeading().startsWith("<?xml") || content.stripLeading().startsWith("<census");
+		Document doc = xml ? Jsoup.parse(content, "", Parser.xmlParser()) : Jsoup.parse(content);
+		Map<String, Group> newGroups;
+		Map<String, Project> newProjects;
+		Map<String, Person> newPeople;
+		Set<String> newUserIds;
+		Instant newSourceTime = null;
+		if (xml) {
+			Element root = doc.selectFirst("census");
+			if (root == null || content.contains("<!DOCTYPE") || !content.stripTrailing().endsWith("</census>")) {
+				throw new IllegalArgumentException("Invalid census XML");
+			}
+			if (!root.attr("time").isBlank()) {
+				newSourceTime = Instant.parse(root.attr("time"));
+			}
+			newPeople = extractXmlPeople(root);
+			newGroups = new HashMap<>();
+			newProjects = new HashMap<>();
+			for (Element element : root.children()) {
+				Affiliation affiliation;
+				if (element.tagName().equals("group")) {
+					affiliation = new Group(requiredAttribute(element, "name"));
+					newGroups.put(affiliation.getId(), (Group) affiliation);
+				} else if (element.tagName().equals("project")) {
+					affiliation = new Project(requiredAttribute(element, "name"));
+					newProjects.put(affiliation.getId(), (Project) affiliation);
+				} else {
+					continue;
+				}
+				Element name = element.selectFirst("full-name");
+				if (name == null || name.text().isBlank()) {
+					throw new IllegalArgumentException("Missing census affiliation name");
+				}
+				// Keep the display names used by the original HTML API.
+				affiliation.setFullName(name.text() + (affiliation instanceof Group ? " Group" : " Project"));
+				for (Element member : element.children()) {
+					if (!member.tagName().equals("person")) {
+						continue;
+					}
+					String userId = requiredAttribute(member, "ref");
+					Person person = newPeople.get(userId);
+					if (person == null) {
+						throw new IllegalArgumentException("Unknown census member: " + userId);
+					}
+					String role = member.hasAttr("role") ? member.attr("role") : "member";
+					if (!Set.of("member", "lead", "author", "committer", "reviewer").contains(role)) {
+						throw new IllegalArgumentException("Unknown census role: " + role);
+					}
+					role = role.substring(0, 1).toUpperCase(Locale.ROOT) + role.substring(1);
+					affiliation.addMember(userId, role);
+					person.addAffiliation(affiliation.getId(), affiliation);
+				}
+			}
+			newUserIds = new HashSet<>(newPeople.keySet());
+		} else {
+			newUserIds = extractUserIds(doc);
+			newGroups = extractGroups(doc);
+			newProjects = extractProjects(doc);
+			newPeople = extractPeople(doc, newGroups, newProjects);
+		}
+		if (newUserIds.isEmpty() || newGroups.isEmpty() || newProjects.isEmpty() || newPeople.isEmpty()) {
+			throw new IllegalArgumentException("The response does not contain a complete OpenJDK census");
+		}
 
 		synchronized (this) {
 			userIds = newUserIds;
 			groups = newGroups;
 			projects = newProjects;
 			people = newPeople;
+			sourceTime = newSourceTime;
+			lastSuccessfulRefresh = Instant.now();
+			lastRefreshAttempt = lastSuccessfulRefresh;
+			lastRefreshFailed = false;
+			format = xml ? "xml" : "html";
 		}
 		// Print results
 		Log.info("OpenJDK groups found: " + groups.size());
@@ -124,43 +209,101 @@ public class OpenjdkCensusScraper {
 	}
 
 	public synchronized Set<String> getUserIds() {
+		ensureAvailable();
 		return new HashSet<>(userIds);
 	}
 
 	public synchronized Map<String, Group> getGroups() {
+		ensureAvailable();
 		return new HashMap<>(groups);
 	}
 
 	public synchronized Map<String, Project> getProjects() {
+		ensureAvailable();
 		return new HashMap<>(projects);
 	}
 
 	public synchronized Map<String, Person> getPeople() {
+		ensureAvailable();
 		return new HashMap<>(people);
+	}
+
+	private static Map<String, Person> extractXmlPeople(Element root) {
+		Map<String, Person> result = new HashMap<>();
+		for (Element element : root.children()) {
+			if (!element.tagName().equals("person")) {
+				continue;
+			}
+			String id = requiredAttribute(element, "name");
+			Element name = element.selectFirst("full-name");
+			if (name == null || name.text().isBlank()) {
+				throw new IllegalArgumentException("Missing census person name");
+			}
+			Person person = new Person(id, name.text());
+			Element organization = element.selectFirst("org");
+			if (organization != null) {
+				person.setOrganization(organization.text());
+			}
+			if (result.put(id, person) != null) {
+				throw new IllegalArgumentException("Duplicate census person: " + id);
+			}
+		}
+		return result;
+	}
+
+	private static String requiredAttribute(Element element, String name) {
+		String value = element.attr(name);
+		if (value.isBlank()) {
+			throw new IllegalArgumentException("Missing census attribute: " + name);
+		}
+		return value;
+	}
+
+	public synchronized Map<String, Object> getSnapshotMetadata() {
+		Map<String, Object> result = new LinkedHashMap<>();
+		result.put("sourceUrl", censusRetriever == null ? "fixture" : censusRetriever.getSourceUri().toString());
+		result.put("format", format);
+		result.put("sourceTime", sourceTime == null ? null : sourceTime.toString());
+		result.put("lastSuccessfulRefresh", lastSuccessfulRefresh == null ? null : lastSuccessfulRefresh.toString());
+		result.put("lastRefreshAttempt", lastRefreshAttempt == null ? null : lastRefreshAttempt.toString());
+		result.put("available", people != null);
+		result.put("stale", lastSuccessfulRefresh == null || lastRefreshFailed
+				|| Duration.between(lastSuccessfulRefresh, Instant.now()).getSeconds() > refreshIntervalInSeconds * 2L);
+		result.put("lastRefreshFailed", lastRefreshFailed);
+		return result;
+	}
+
+	/** Captures related data and provenance together before callers filter outside the lock. */
+	public synchronized Snapshot getSnapshot() {
+		ensureAvailable();
+		return new Snapshot(Map.copyOf(groups), Map.copyOf(projects), Map.copyOf(people), getSnapshotMetadata());
+	}
+
+	public record Snapshot(Map<String, Group> groups, Map<String, Project> projects,
+			Map<String, Person> people, Map<String, Object> metadata) {}
+
+	private void ensureAvailable() {
+		if (people == null) {
+			throw new ServiceUnavailableException("OpenJDK census data is not available yet");
+		}
 	}
 
 	public Set<Person> findPeople(String regexp) {
 		Pattern pattern = Pattern.compile(regexp);
 		Predicate<Person> predicate = person -> pattern.matcher(person.getFullName()).find() || pattern.matcher(person.getUserid()).find();
-		synchronized (this) {
-			return people.values().stream().filter(predicate).collect(Collectors.toSet());
-		}
+		return getPeople().values().stream().filter(predicate).collect(Collectors.toSet());
 	}
 
 	public Set<Project> findProjects(String regexp) {
 		Pattern pattern = Pattern.compile(regexp);
 		Predicate<Project> predicate = project -> pattern.matcher(project.getFullName()).find() || pattern.matcher(project.getId()).find();
-		synchronized (this) {
-			return projects.values().stream().filter(predicate).collect(Collectors.toSet());
-		}
+		return getProjects().values().stream().filter(predicate).collect(Collectors.toSet());
 	}
 
 	public Set<Group> findGroups(String regexp) {
 		Pattern pattern = Pattern.compile(regexp);
 		Predicate<Group> predicate = group -> pattern.matcher(group.getFullName()).find() || pattern.matcher(group.getId()).find();
-		synchronized (this) {
-			return groups.values().stream().filter(predicate).collect(Collectors.toSet());
-		}
+		return getGroups().values().stream().filter(predicate).collect(Collectors.toSet());
 	}
 
 	private static Set<String> extractUserIds(Document doc) {
@@ -277,6 +420,7 @@ public class OpenjdkCensusScraper {
 		}
 	}
 
+	@PreDestroy
 	public void shutdown() {
 		Log.info("Shutting down census updater...");
 		scheduler.shutdown();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Marcus Hirt
+ * Copyright (C) 2024-2026 Marcus Hirt
  *
  * This software is free:
  *
@@ -30,39 +30,33 @@ package se.hirt.openjdk.helper.mcp;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.GET;
-import jakarta.ws.rs.OPTIONS;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
-import org.jboss.logging.Logger;
 
-/**
- * MCP helper endpoints and redirects.
- */
-@Path("/mcp")
+/** Human-readable help lives outside the MCP protocol endpoint. */
+@Path("/mcp-info")
 @ApplicationScoped
 public class MCPTransportResource {
-
-	private static final Logger LOG = Logger.getLogger(MCPTransportResource.class);
-
-	/**
-	 * Root MCP endpoint that provides information and redirects.
-	 */
 	@GET
 	@Produces(MediaType.TEXT_HTML)
-	public Response mcpRoot() {
-		String html = "<!DOCTYPE html><html><head><title>OpenJDK Helper MCP Server</title></head><body>" + "<h1>OpenJDK Helper MCP Server</h1>" + "<p>This is the MCP Server for the OpenJDK Helper application.</p>" + "<h2>Available MCP Endpoints</h2>" + "<ul>" + "<li><a href=\"/mcp/sse\">/mcp/sse</a> - Server-Sent Events (SSE) endpoint</li>" + "</ul>" + "<h2>Connection Instructions</h2>" + "<p>To connect with the MCP Inspector, use:</p>" + "<pre>npx @modelcontextprotocol/inspector http://localhost:8080/mcp --transport-type=sse</pre>" + "</body></html>";
-
-		return Response.ok(html).header("Content-Type", "text/html").build();
-	}
-
-	/**
-	 * Handle requests to /mcp directly (for CORS and OPTIONS).
-	 */
-	@OPTIONS
-	public Response mcpOptions() {
-		return Response.ok().header("Access-Control-Allow-Origin", "*").header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-				.header("Access-Control-Allow-Headers", "Content-Type").build();
+	public String mcpInfo() {
+		return """
+				<!DOCTYPE html>
+				<html lang="en">
+				<head><meta charset="utf-8"><title>OpenJDK Helper MCP Server</title></head>
+				<body>
+				<h1>OpenJDK Helper MCP Server</h1>
+				<p>OpenJDK census, GitHub reviews and backports, JBS issues, JEPs, contributor guidance and project processes are available through MCP and REST.</p>
+				<ul>
+				<li><code>mcp</code>: Streamable HTTP endpoint. Configure your MCP client with this URL.</li>
+				<li><code>mcp/sse</code>: legacy HTTP/SSE transport.</li>
+				<li><a href="openapi">OpenAPI schema</a> for REST clients and Custom GPT actions.</li>
+				<li><a href="processes">Project process summaries</a> with official links.</li>
+				</ul>
+				<p>For a local stdio client, launch the jar or native executable with <code>-Dquarkus.profile=stdio</code>.</p>
+				</body>
+				</html>
+				""";
 	}
 }

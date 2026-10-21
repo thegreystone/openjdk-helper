@@ -1,0 +1,24 @@
+{
+  "key": "JDK-8291976",
+  "fields": {
+    "summary": "HTTP/3 for the HTTP Client API",
+    "status": {"name": "Resolved"},
+    "resolution": {"name": "Fixed"},
+    "issuetype": {"name": "JEP"},
+    "priority": {"name": "P3"},
+    "description": "Implement HTTP/3 support in the HTTP Client API.",
+    "assignee": {"displayName": "Example Developer"},
+    "components": [{"name": "core-libs"}],
+    "labels": ["http-client"],
+    "versions": [{"name": "25"}],
+    "fixVersions": [{"name": "26"}],
+    "created": "2022-08-05T14:58:00.000+0000",
+    "updated": "2026-01-21T11:04:00.000+0000",
+    "issuelinks": [
+      {"type": {"name": "CSR", "outward": "csr for", "inward": "has csr"},
+       "inwardIssue": {"key": "JDK-8340001", "fields": {"summary": "HTTP/3 API review", "status": {"name": "Closed"}, "issuetype": {"name": "CSR"}}}},
+      {"type": {"name": "Backport", "outward": "backported by", "inward": "backport of"},
+       "outwardIssue": {"key": "JDK-8340002", "fields": {"summary": "HTTP/3 backport", "status": {"name": "Open"}, "issuetype": {"name": "Backport"}}}}
+    ]
+  }
+}

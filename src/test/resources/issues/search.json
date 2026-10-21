@@ -1,0 +1,9 @@
+{
+  "startAt": 20,
+  "maxResults": 2,
+  "total": 23,
+  "issues": [
+    {"key": "JMC-8639", "fields": {"summary": "Example Mission Control issue", "status": {"name": "Resolved"}, "issuetype": {"name": "Bug"}, "fixVersions": [{"name": "9.1"}]}},
+    {"key": "JMC-8640", "fields": {"summary": "Another Mission Control issue", "status": {"name": "Resolved"}, "issuetype": {"name": "Bug"}}}
+  ]
+}

@@ -48,3 +48,6 @@ application-local.properties
 /target/
 /build/
 /out/
+
+# Annotation-processor output written next to the sources
+/META-INF/

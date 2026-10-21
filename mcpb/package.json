@@ -1,0 +1,12 @@
+{
+  "name": "openjdk-helper-bundle-tools",
+  "private": true,
+  "type": "module",
+  "description": "Build and validate native OpenJDK Helper MCP bundles",
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@anthropic-ai/mcpb": "2.1.2"
+  }
+}
