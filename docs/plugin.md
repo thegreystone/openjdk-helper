@@ -28,7 +28,7 @@ node --test plugin-tools/test-plugin.mjs
 node plugin-tools/pack.mjs
 ```
 
-`claude plugin validate plugin` checks the Claude manifest, skill and MCP configuration; add `--profile directory` to also run the checks Anthropic's plugin directory applies to a submission. The expected output is one warning about the missing version, which is intentional. CI runs the same validation; it does not use `--strict`, because that would turn the version warning into a failure.
+`claude plugin validate plugin` checks the Claude manifest, skill and MCP configuration, and also runs the subset of Anthropic's plugin directory checks that the CLI can run locally. `--profile directory` makes the command fail when one of those would refuse a submission. The expected output is one warning about the missing version, which is intentional. CI runs the validation with `--profile directory` but not `--strict`, because `--strict` would turn the version warning into a failure.
 
 The Node tooling lives in [plugin-tools/](../plugin-tools/) rather than in the plugin directory. Claude Code runs `npm install` inside any plugin whose root has a `package.json` and lockfile, and the development files should not reach users of either client.
 
@@ -87,7 +87,7 @@ A Git-backed marketplace provides local or team distribution. Anthropic's plugin
 
 ### Anthropic plugin directory
 
-`claude plugin validate plugin --profile directory` runs the subset of the directory's checks that the CLI can run locally: README length, icon, privacy policy and support URLs. The Claude manifest already carries `privacyPolicyUrl`, `termsOfServiceUrl`, `supportUrl`, `documentationUrl` and the Duke icon. The directory also runs a safety scan and a policy review that the CLI does not.
+`claude plugin validate plugin --profile directory` fails on the directory checks the CLI can run locally: README length, icon, privacy policy and support URLs. The Claude manifest already carries `privacyPolicyUrl`, `termsOfServiceUrl`, `supportUrl`, `documentationUrl` and the Duke icon. The directory also runs a safety scan and a policy review that the CLI does not.
 
 ### OpenAI directory
 

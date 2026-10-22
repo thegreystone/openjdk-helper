@@ -23,7 +23,7 @@ jobs:
       - name: Validate Claude plugin
         run: |
           npm install -g @anthropic-ai/claude-code
-          claude plugin validate plugin
+          claude plugin validate plugin --profile directory
 
       - name: Package and test ChatGPT and Codex plugin
         run: |
