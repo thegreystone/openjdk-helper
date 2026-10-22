@@ -119,9 +119,9 @@ Then `codex mcp list` should show `openjdk-helper`.
 
 Any client that speaks **Streamable HTTP** can use `https://api.hirt.se/openjdk/mcp`. Legacy SSE clients can use `https://api.hirt.se/openjdk/mcp/sse`, and [connection information](https://api.hirt.se/openjdk/mcp-info) is available from the service. Clients that launch a local process use the executable with `-Dquarkus.profile=stdio` as shown above.
 
-### ChatGPT and Codex plugin
+### Claude, ChatGPT and Codex plugin
 
-The portable plugin combines OpenJDK contributor and project-lead instructions with the hosted MCP connection. See the [plugin guide](docs/plugin.md) for local marketplace installation and packaging. Native `.mcpb` bundles provide local stdio installations.
+The plugin combines OpenJDK contributor and project-lead instructions with the hosted MCP connection, in one directory that Claude Code, Claude Desktop, ChatGPT and Codex can all install. The [AI Plugins marketplace](https://github.com/thegreystone/ai-plugins) provides installation instructions for each client. See the [plugin guide](docs/plugin.md) for local testing and packaging. Native `.mcpb` bundles provide local stdio installations.
 
 ## Public service
 

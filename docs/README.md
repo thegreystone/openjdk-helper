@@ -16,6 +16,6 @@ For installing OpenJDK Helper in an AI client, see the [project README](../READM
 - [Development](development.md): JVM and native builds, tests, local stdio and MCPB packaging.
 - [Deployment](deployment.md): container images, reverse proxies and multiple replicas.
 - [Releases](releases.md): release artifacts, Docker publication and platform signing.
-- [Plugin development](plugin.md): portable plugin packaging, local marketplace installation and OpenAI submission.
+- [Plugin development](plugin.md): the dual-format Claude and OpenAI plugin, validation, packaging, local marketplace testing and directory submission.
 
 Run build, test, packaging and release commands from the repository root unless a guide states otherwise.

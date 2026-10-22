@@ -90,6 +90,20 @@ function validateManifest(manifest, mcp, submission) {
   return ui;
 }
 
+// The same directory is also a Claude plugin: .claude-plugin/plugin.json and .mcp.json must describe the same
+// plugin and server. Claude installs the folder from Git and tracks commits, so that manifest must not pin a version.
+function validateClaude(manifest, server, claude, claudeMcp) {
+  requireValue(claude.name === manifest.name && text(claude.description), 'Claude plugin.json must use the same name and have a description');
+  requireValue(claude.version === undefined, 'Claude plugin.json must not pin a version; Git-backed installs track commits');
+  const servers = claudeMcp.mcpServers && Object.entries(claudeMcp.mcpServers);
+  requireValue(servers?.length === 1 && servers[0][0] === manifest.name, 'Claude .mcp.json must declare exactly one server named after the plugin');
+  const [, claudeServer] = servers[0];
+  requireValue(claudeServer?.type === 'http' && claudeServer.url === server.url && Object.keys(claudeServer).every(key => ['type', 'url'].includes(key)),
+    'Claude .mcp.json server must use type http and the same URL as mcp.json, without headers or credentials');
+  if (claude.icon !== undefined) requireValue(/^\.\/assets\/[A-Za-z0-9_.-]+\.(png|jpg|jpeg)$/.test(claude.icon), 'Claude icon must reference a PNG or JPEG in assets/');
+  return claude.icon?.replace(/^\.\//, '');
+}
+
 export async function buildPlugin({ root = path.dirname(here), version, submission = false, check = false } = {}) {
   root = path.resolve(root);
   requireValue(!(await lstat(path.join(root, 'plugin'))).isSymbolicLink(), 'Plugin source directory must not be a symlink');
@@ -98,6 +112,9 @@ export async function buildPlugin({ root = path.dirname(here), version, submissi
   const selected = semver(version ?? projectVersion((await safeFile(root, 'pom.xml')).toString('utf8')));
   manifest.version = selected;
   const ui = validateManifest(manifest, mcp, submission);
+  const claudeIcon = validateClaude(manifest, Object.values(mcp.mcpServers)[0],
+    JSON.parse(await safeFile(root, 'plugin/.claude-plugin/plugin.json')), JSON.parse(await safeFile(root, 'plugin/.mcp.json')));
+  if (claudeIcon) await safeFile(root, `plugin/${claudeIcon}`);
   const files = { 'plugin.json': Buffer.from(JSON.stringify(manifest, null, 2) + '\n'),
     'mcp.json': Buffer.from(JSON.stringify(mcp, null, 2) + '\n'), LICENSE: await safeFile(root, 'LICENSE') };
   for (const field of ['composerIcon', 'logo']) {

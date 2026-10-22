@@ -1,0 +1,18 @@
+{
+  "name": "openjdk-helper",
+  "displayName": "OpenJDK Helper",
+  "description": "Source-backed OpenJDK contributor and project-lead assistance through the hosted OpenJDK Helper service.",
+  "author": {
+    "name": "Marcus Hirt",
+    "url": "https://www.hirt.se"
+  },
+  "homepage": "https://github.com/thegreystone/openjdk-helper",
+  "repository": "https://github.com/thegreystone/openjdk-helper",
+  "documentationUrl": "https://github.com/thegreystone/openjdk-helper/blob/main/docs/tools.md",
+  "supportUrl": "https://github.com/thegreystone/openjdk-helper/issues",
+  "privacyPolicyUrl": "https://github.com/thegreystone/openjdk-helper/blob/main/PRIVACY.md",
+  "termsOfServiceUrl": "https://github.com/thegreystone/openjdk-helper/blob/main/TERMS.md",
+  "license": "BSD-3-Clause",
+  "keywords": ["openjdk", "java", "contributors", "reviews", "jbs", "jeps", "backports", "project-lead"],
+  "icon": "./assets/duke-icon.png"
+}

@@ -22,15 +22,22 @@ async function fixture(t) {
         positive: Array.from({ length: 5 }, () => ({ description: 'Read data', prompt: 'Find JEP 444', tools_triggered: 'getJep', expected_behavior: 'Cite the JEP' })),
         negative: Array.from({ length: 3 }, () => ({ description: 'No mutation', prompt: 'Integrate a change' })) } } } } };
   const mcp = { $schema: 'https://agent-plugins.org/schemas/1.0.0/mcp.schema.json', mcpServers: { 'openjdk-helper': { type: 'streamable-http', url: 'https://api.hirt.se/openjdk/mcp', extensions: { 'com.openai': { auth: { type: 'none' } } } } } };
+  const claude = { name: 'openjdk-helper', description: 'Read-only OpenJDK information', icon: './assets/icon.png' };
+  const claudeMcp = { mcpServers: { 'openjdk-helper': { type: 'http', url: 'https://api.hirt.se/openjdk/mcp' } } };
   await mkdir(path.join(root, 'plugin/assets'), { recursive: true });
+  await mkdir(path.join(root, 'plugin/.claude-plugin'), { recursive: true });
   await mkdir(path.join(root, 'plugin/skills/openjdk-helper'), { recursive: true });
   await writeFile(path.join(root, 'pom.xml'), '<project><parent><version>99.0.0</version></parent><version>0.2.1-SNAPSHOT</version><dependencies><dependency><version>88.0.0</version></dependency></dependencies></project>');
   await writeFile(path.join(root, 'LICENSE'), 'BSD-3-Clause fixture');
   await writeFile(path.join(root, 'plugin/assets/icon.svg'), '<svg xmlns="http://www.w3.org/2000/svg"/>');
+  await writeFile(path.join(root, 'plugin/assets/icon.png'), Buffer.from('89504e470d0a1a0a', 'hex'));
   await writeFile(path.join(root, 'plugin/skills/openjdk-helper/SKILL.md'), '---\nname: openjdk-helper\ndescription: Read OpenJDK information\n---\nUse read-only tools.\n');
-  const save = async () => { await writeFile(path.join(root, 'plugin/plugin.json'), JSON.stringify(manifest)); await writeFile(path.join(root, 'plugin/mcp.json'), JSON.stringify(mcp)); };
+  const save = async () => {
+    await writeFile(path.join(root, 'plugin/plugin.json'), JSON.stringify(manifest)); await writeFile(path.join(root, 'plugin/mcp.json'), JSON.stringify(mcp));
+    await writeFile(path.join(root, 'plugin/.claude-plugin/plugin.json'), JSON.stringify(claude)); await writeFile(path.join(root, 'plugin/.mcp.json'), JSON.stringify(claudeMcp));
+  };
   await save();
-  return { root, manifest, mcp, save, ui: manifest.extensions['com.openai'].interface, review: manifest.extensions['com.openai'].review };
+  return { root, manifest, mcp, claude, claudeMcp, save, ui: manifest.extensions['com.openai'].interface, review: manifest.extensions['com.openai'].review };
 }
 
 test('build derives direct POM version and includes only whitelisted root entries', async t => {
@@ -120,4 +127,28 @@ test('does not overwrite a symlinked output ZIP', async t => {
   catch (error) { if (['EPERM', 'EACCES'].includes(error.code)) return t.skip('File symlinks unavailable on this host'); throw error; }
   await assert.rejects(buildPlugin({ root: f.root }), /Output ZIP must not be a symlink/);
   assert.equal(await readFile(destination, 'utf8'), 'unchanged');
+});
+
+test('keeps the Claude manifest in step with the portable manifest and out of the archive', async t => {
+  const f = await fixture(t);
+  const result = await buildPlugin({ root: f.root });
+  assert(!Object.keys(unzipSync(await readFile(result.output))).some(name => name.startsWith('.claude-plugin') || name === '.mcp.json'));
+  f.claude.version = '1.0.0'; await f.save();
+  await assert.rejects(buildPlugin({ root: f.root, check: true }), /must not pin a version/);
+  delete f.claude.version; f.claude.name = 'other'; await f.save();
+  await assert.rejects(buildPlugin({ root: f.root, check: true }), /same name/);
+  f.claude.name = 'openjdk-helper'; f.claude.icon = './assets/icon.svg'; await f.save();
+  await assert.rejects(buildPlugin({ root: f.root, check: true }), /PNG or JPEG/);
+  f.claude.icon = './assets/missing.png'; await f.save();
+  await assert.rejects(buildPlugin({ root: f.root, check: true }), /ENOENT/);
+  f.claude.icon = './assets/icon.png';
+  const server = f.claudeMcp.mcpServers['openjdk-helper'];
+  server.url = 'https://api.hirt.se/other/mcp'; await f.save();
+  await assert.rejects(buildPlugin({ root: f.root, check: true }), /same URL/);
+  server.url = 'https://api.hirt.se/openjdk/mcp'; server.headers = { Authorization: 'secret' }; await f.save();
+  await assert.rejects(buildPlugin({ root: f.root, check: true }), /without headers/);
+  delete server.headers; server.type = 'streamable-http'; await f.save();
+  await assert.rejects(buildPlugin({ root: f.root, check: true }), /type http/);
+  server.type = 'http'; await f.save();
+  await buildPlugin({ root: f.root, check: true });
 });

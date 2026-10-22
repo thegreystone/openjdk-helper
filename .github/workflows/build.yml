@@ -20,13 +20,18 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-          cache-dependency-path: plugin/package-lock.json
+          cache-dependency-path: plugin-tools/package-lock.json
+
+      - name: Validate Claude plugin
+        run: |
+          npm install -g @anthropic-ai/claude-code
+          claude plugin validate plugin
 
       - name: Package and test ChatGPT and Codex plugin
         run: |
-          npm ci --prefix plugin --ignore-scripts
-          node --test plugin/test-plugin.mjs
-          node plugin/pack.mjs
+          npm ci --prefix plugin-tools --ignore-scripts
+          node --test plugin-tools/test-plugin.mjs
+          node plugin-tools/pack.mjs
 
       - uses: actions/upload-artifact@v4
         with:

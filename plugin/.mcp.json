@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "openjdk-helper": {
+      "type": "http",
+      "url": "https://api.hirt.se/openjdk/mcp"
+    }
+  }
+}
