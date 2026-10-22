@@ -65,10 +65,11 @@ function validateManifest(manifest, mcp, submission) {
   requireValue(servers?.length === 1, 'mcp.json must declare exactly one remote MCP server');
   const [name, server] = servers[0];
   requireValue(name === manifest.name && server?.type === 'streamable-http', 'MCP server must match the plugin name and use streamable-http');
-  requireValue(Object.keys(server).every(key => ['type', 'url', 'extensions'].includes(key)), 'MCP server must not contain headers, credentials or local process settings');
+  // Codex rejects unknown server fields, including the documented com.openai auth extension.
+  // The public endpoint needs only type and URL; keep the package within that supported subset.
+  requireValue(Object.keys(server).every(key => ['type', 'url'].includes(key)),
+    'MCP server must contain only type and url for Codex compatibility, without extensions, headers or credentials');
   https(server.url, 'MCP server URL', true);
-  const auth = server.extensions?.['com.openai']?.auth;
-  requireValue(auth?.type === 'none' && Object.keys(auth).length === 1, 'MCP auth.type must be none, without credentials');
   const openai = manifest.extensions?.['com.openai'];
   const ui = openai?.interface;
   requireValue(text(ui?.displayName) && text(ui?.shortDescription), 'OpenAI interface displayName and shortDescription are required');

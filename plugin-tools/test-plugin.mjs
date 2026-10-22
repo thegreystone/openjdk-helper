@@ -21,7 +21,7 @@ async function fixture(t) {
       review: { test_cases: {
         positive: Array.from({ length: 5 }, () => ({ description: 'Read data', prompt: 'Find JEP 444', tools_triggered: 'getJep', expected_behavior: 'Cite the JEP' })),
         negative: Array.from({ length: 3 }, () => ({ description: 'No mutation', prompt: 'Integrate a change' })) } } } } };
-  const mcp = { $schema: 'https://agent-plugins.org/schemas/1.0.0/mcp.schema.json', mcpServers: { 'openjdk-helper': { type: 'streamable-http', url: 'https://api.hirt.se/openjdk/mcp', extensions: { 'com.openai': { auth: { type: 'none' } } } } } };
+  const mcp = { $schema: 'https://agent-plugins.org/schemas/1.0.0/mcp.schema.json', mcpServers: { 'openjdk-helper': { type: 'streamable-http', url: 'https://api.hirt.se/openjdk/mcp' } } };
   const claude = { name: 'openjdk-helper', description: 'Read-only OpenJDK information', icon: './assets/icon.png' };
   const claudeMcp = { mcpServers: { 'openjdk-helper': { type: 'http', url: 'https://api.hirt.se/openjdk/mcp' } } };
   await mkdir(path.join(root, 'plugin/assets'), { recursive: true });
@@ -50,6 +50,7 @@ test('build derives direct POM version and includes only whitelisted root entrie
   assert.equal(result.version, '0.2.1-SNAPSHOT');
   assert.deepEqual(Object.keys(entries).sort(), ['LICENSE', 'assets/icon.svg', 'mcp.json', 'plugin.json', 'skills/openjdk-helper/SKILL.md']);
   assert.equal(JSON.parse(Buffer.from(entries['plugin.json']).toString()).version, result.version);
+  assert.deepEqual(JSON.parse(Buffer.from(entries['mcp.json']).toString()), f.mcp);
   const first = await readFile(result.output);
   await buildPlugin({ root: f.root });
   assert.deepEqual(await readFile(result.output), first, 'Same inputs should produce identical ZIP bytes');
@@ -88,7 +89,7 @@ test('requires the portable manifest schema identifiers', async t => {
   await assert.rejects(buildPlugin({ root: f.root, check: true }), /MCP.*\$schema/);
 });
 
-test('rejects invalid versions, private or malformed endpoints, and auth settings', async t => {
+test('rejects invalid versions, private or malformed endpoints, and headers', async t => {
   const f = await fixture(t);
   for (const version of ['1.2', '01.2.3', '1.2.3-01', '../1.2.3']) await assert.rejects(buildPlugin({ root: f.root, version, check: true }), /semantic version/);
   const server = f.mcp.mcpServers['openjdk-helper'];
@@ -97,8 +98,6 @@ test('rejects invalid versions, private or malformed endpoints, and auth setting
   }
   server.url = 'https://api.hirt.se/openjdk/mcp'; server.headers = { Authorization: 'secret' }; await f.save();
   await assert.rejects(buildPlugin({ root: f.root, check: true }), /headers/);
-  delete server.headers; server.extensions['com.openai'].auth.type = 'oauth'; await f.save();
-  await assert.rejects(buildPlugin({ root: f.root, check: true }), /auth.type must be none/);
 });
 
 test('rejects icon path escapes, missing assets, malformed skills and missing portable fields', async t => {
@@ -164,4 +163,11 @@ test('requires the committed version to be a release and to match the release ov
   await assert.rejects(buildPlugin({ root: f.root, version: '1.2.4', check: true }), /does not match release version 1\.2\.4; bump it before tagging/);
   await buildPlugin({ root: f.root, check: true });
   await buildPlugin({ root: f.root, version: '1.2.3', check: true });
+});
+
+test('rejects the auth extension that makes Codex silently drop the MCP server', async t => {
+  const f = await fixture(t);
+  f.mcp.mcpServers['openjdk-helper'].extensions = { 'com.openai': { auth: { type: 'none' } } };
+  await f.save();
+  await assert.rejects(buildPlugin({ root: f.root, check: true }), /only type and url for Codex compatibility/);
 });

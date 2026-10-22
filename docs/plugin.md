@@ -81,6 +81,20 @@ Run the prompts in [plugin/plugin.json](../plugin/plugin.json) under `extensions
 
 To test just the server in ChatGPT, use Plugins → Add custom MCP server, enter the hosted URL, and choose no authentication. This exercises the server tools; use the local marketplace to test the packaged instructions as well. Account and workspace permissions determine which installation options are available.
 
+### Skill loads but MCP tools are missing in Codex
+
+Keep the portable MCP server entry limited to `type` and `url`. Codex `0.163.0-alpha.10.2` rejects the per-server `extensions.com.openai.auth` object, including `auth: { "type": "none" }`, and drops that server while still loading the skill. The public service requires no credentials, so omitting that extension is sufficient. The [Codex parser](https://github.com/openai/codex/blob/40db507eeca2ff778c040c325449eb72e90c0590/codex-rs/codex-mcp/src/agent_plugin_config.rs) uses `deny_unknown_fields` for server entries.
+
+On 2026-10-22, separate fresh processes of that Codex build read isolated copies of the portable package. Both discovered the skill; the original entry with the extension produced zero MCP servers, and removing only the extension produced `openjdk-helper`. The packaging tests reject the original configuration to prevent a recurrence. A separate Codex package or marketplace source path is unnecessary for this issue.
+
+After publishing a plugin change, refresh the marketplace and start a fresh conversation:
+
+```sh
+codex plugin marketplace upgrade hirt-ai-plugins
+```
+
+Ordinary cache refreshes can skip an unchanged manifest version. Bump `plugin.json` for the next release as described above; when testing an unpublished or same-version change, explicitly reinstall the plugin from the refreshed marketplace and check that its installed MCP entry has only `type` and `url`. Restarting a conversation alone does not fetch repository changes.
+
 ## Prepare public submission
 
 A Git-backed marketplace provides local or team distribution. Anthropic's plugin directory and OpenAI's public directory each require a separate submission and review.
