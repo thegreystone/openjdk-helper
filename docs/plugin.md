@@ -15,7 +15,7 @@ Users install from the [AI Plugins marketplace](https://github.com/thegreystone/
 
 Claude Code computes a version for every installed plugin and only refetches when that version changes. For a Git subdirectory source with no `version` in the manifest or the marketplace entry, the version is the commit SHA, so every push to `main` reaches Claude users on `claude plugin update`. For that reason `.claude-plugin/plugin.json` deliberately has no `version` field, and the packager rejects one. Pinning a version would freeze users on the cached copy until the string changes, and CI cannot stamp it, because Git installs read the committed files.
 
-The portable `plugin.json` declares a version for Git-backed Codex marketplace installs. Keep it aligned with [pom.xml](../pom.xml); ZIP packaging overwrites it with the POM version or the explicit release override.
+The portable `plugin.json` carries the most recent release version, which is also the version the hosted service at `api.hirt.se` runs; Codex reads it from the committed file. Bump it in a commit before pushing the release tag: the release workflow passes the tag's version to the packager, which fails when the committed version differs. The packager also rejects a snapshot or prerelease value there. Development builds name the ZIP after the [pom.xml](../pom.xml) snapshot version and write that version into the archived copy.
 
 ## Validate, test and build
 

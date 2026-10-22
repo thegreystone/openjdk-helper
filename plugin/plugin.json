@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "openjdk-helper",
-  "version": "0.2.2-SNAPSHOT",
+  "version": "0.2.2",
   "description": "Source-backed OpenJDK contributor and project-lead assistance through the hosted OpenJDK Helper service.",
   "author": {
     "name": "Marcus Hirt",

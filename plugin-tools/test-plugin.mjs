@@ -15,7 +15,7 @@ async function fixture(t) {
     assert(path.basename(resolved).startsWith('openjdk-plugin-test-'));
     await rm(resolved, { recursive: true, force: true });
   });
-  const manifest = { $schema: 'https://agent-plugins.org/schemas/1.0.0/plugin.schema.json', name: 'openjdk-helper', description: 'Read-only OpenJDK information', author: { name: 'Marcus Hirt' }, license: 'BSD-3-Clause',
+  const manifest = { $schema: 'https://agent-plugins.org/schemas/1.0.0/plugin.schema.json', name: 'openjdk-helper', version: '0.2.1', description: 'Read-only OpenJDK information', author: { name: 'Marcus Hirt' }, license: 'BSD-3-Clause',
     extensions: { 'com.openai': { interface: { displayName: 'OpenJDK Helper', shortDescription: 'OpenJDK tools',
       composerIcon: './assets/icon.svg', logo: './assets/icon.svg', websiteURL: 'https://www.hirt.se', supportURL: 'https://github.com/thegreystone/openjdk-helper/issues' },
       review: { test_cases: {
@@ -57,8 +57,9 @@ test('build derives direct POM version and includes only whitelisted root entrie
 
 test('version override affects only package and check mode writes no archive', async t => {
   const f = await fixture(t);
+  f.manifest.version = '1.2.3'; await f.save();
   const original = await readFile(path.join(f.root, 'plugin/plugin.json'));
-  const checked = await buildPlugin({ root: f.root, version: '1.2.3-rc.1+release', check: true });
+  const checked = await buildPlugin({ root: f.root, version: '1.2.3', check: true });
   assert.equal(checked.output, null);
   await assert.rejects(access(path.join(f.root, 'target')));
   const built = await buildPlugin({ root: f.root, version: '1.2.3' });
@@ -151,4 +152,16 @@ test('keeps the Claude manifest in step with the portable manifest and out of th
   await assert.rejects(buildPlugin({ root: f.root, check: true }), /type http/);
   server.type = 'http'; await f.save();
   await buildPlugin({ root: f.root, check: true });
+});
+
+test('requires the committed version to be a release and to match the release override', async t => {
+  const f = await fixture(t);
+  for (const version of [undefined, '0.2.1-SNAPSHOT', '0.2.1-rc.1', '1.2']) {
+    f.manifest.version = version; await f.save();
+    await assert.rejects(buildPlugin({ root: f.root, check: true }), /most recent release version/);
+  }
+  f.manifest.version = '1.2.3'; await f.save();
+  await assert.rejects(buildPlugin({ root: f.root, version: '1.2.4', check: true }), /does not match release version 1\.2\.4; bump it before tagging/);
+  await buildPlugin({ root: f.root, check: true });
+  await buildPlugin({ root: f.root, version: '1.2.3', check: true });
 });

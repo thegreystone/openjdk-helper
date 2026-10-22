@@ -109,7 +109,14 @@ export async function buildPlugin({ root = path.dirname(here), version, submissi
   requireValue(!(await lstat(path.join(root, 'plugin'))).isSymbolicLink(), 'Plugin source directory must not be a symlink');
   const manifest = JSON.parse(await safeFile(root, 'plugin/plugin.json'));
   const mcp = JSON.parse(await safeFile(root, 'plugin/mcp.json'));
+  // The committed plugin.json version is the most recent release, which is also what the hosted service runs. A release
+  // build passes --version from the tag and must find that exact version committed, because Git-backed marketplace
+  // installs read the committed file. Development builds name the ZIP after the POM snapshot version instead.
   const selected = semver(version ?? projectVersion((await safeFile(root, 'pom.xml')).toString('utf8')));
+  requireValue(/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(manifest.version ?? ''),
+    'plugin.json version must be the most recent release version (x.y.z, no snapshot or prerelease)');
+  requireValue(version === undefined || manifest.version === version,
+    `plugin.json version ${manifest.version} does not match release version ${version}; bump it before tagging`);
   manifest.version = selected;
   const ui = validateManifest(manifest, mcp, submission);
   const claudeIcon = validateClaude(manifest, Object.values(mcp.mcpServers)[0],

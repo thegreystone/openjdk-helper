@@ -6,11 +6,13 @@ Run all commands from the repository root. See [development](development.md) for
 
 [GitHub Releases](https://github.com/thegreystone/openjdk-helper/releases) are produced by pushing a `vX.Y.Z` tag. The [release workflow](../.github/workflows/release.yml) uses the tag without its `v` prefix as the release version, rather than the snapshot version in the working tree.
 
+Before pushing the tag, set `version` in [plugin/plugin.json](../plugin/plugin.json) to `X.Y.Z` and commit it. The plugin job fails when the committed version differs from the tag, because marketplace installs read that file from Git. The Claude manifest in `plugin/.claude-plugin/plugin.json` has no version and needs no change; see the [plugin guide](plugin.md#versions-and-updates).
+
 The workflow builds and tests:
 
 - An uber-jar for Java 25 or later.
 - Native executables and MCP Bundles for Linux x86_64/aarch64, macOS aarch64 and Windows x86_64.
-- The portable ChatGPT and Codex plugin ZIP, which connects to the hosted MCP service.
+- The ChatGPT and Codex plugin ZIP, which connects to the hosted MCP service. Claude installs the plugin directory from Git and uses no release artifact.
 
 The GitHub release waits for the uber-jar, native/bundle, plugin and JVM Docker jobs to succeed. Native and bundle test failures therefore prevent release publication. Normal builds do not publish images.
 
